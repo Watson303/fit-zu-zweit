@@ -166,6 +166,11 @@ details.card[open]>summary::after{transform:rotate(-135deg)}
 .item .del{border:0;background:transparent;color:var(--faint);padding:4px 6px;font-size:1.1rem}
 .add{display:flex;gap:8px;margin-top:10px}
 .add input,.add select{min-height:48px}
+.chips{display:flex;gap:6px;overflow-x:auto;margin:10px -16px 10px;padding:0 16px 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 13px;font-weight:650;font-size:.86rem;color:var(--muted)}
+.chips button.on{background:var(--me);border-color:var(--me);color:#fff}
+.day.pick{min-height:60px}
 
 /* Formulare */
 .field{display:block;margin-top:12px}
@@ -427,40 +432,205 @@ const DAYPLAN = {
   }
 };
 
-const RECIPES = {
-  1: { name:'One-Pot-Nudeln', time:'20 Min.', work:'5 Min. Arbeit',
-    ingr:['150 g Vollkornnudeln (Christoffer 65 g, Ariane 85 g)','300 g Putenhack','500 g passierte Tomaten','300 g TK-Zucchini oder Grillgemüse','400 ml Wasser','1 TL Öl, Salz, Pfeffer, Italienische Kräuter'],
-    steps:[{t:'Öl im großen Topf erhitzen, Putenhack krümelig anbraten.', min:4, l:'Hack anbraten'},{t:'Nudeln, passierte Tomaten, TK-Gemüse und Wasser dazu, würzen und einmal aufkochen.'},{t:'Deckel drauf und köcheln lassen, zwischendurch einmal umrühren.', min:12, l:'Nudeln köcheln'},{t:'Abschmecken, fertig. Christoffer weniger Nudeln, dafür mehr Soße und Gemüse.'}] },
-  2: { name:'Lachs vom Blech', time:'35 Min.', work:'5 Min. Arbeit',
-    ingr:['2 Lachsfilets (TK, ca. 250 g)','600 g Drillinge','400 g TK-Möhren','1 EL Rapsöl, Salz, Pfeffer, Kräuter','Zitrone nach Geschmack'],
-    steps:[{t:'Ofen auf 200 °C Umluft vorheizen. Drillinge halbieren, mit Öl und Salz aufs Blech.'},{t:'Kartoffeln vorbacken.', min:15, l:'Kartoffeln vorbacken'},{t:'Lachs (gern direkt gefroren) und TK-Möhren dazulegen, würzen.'},{t:'Fertig backen, bis der Lachs durch ist.', min:20, l:'Lachs im Ofen'}] },
-  3: { name:'Hähnchen-Reis-Pfanne', time:'15 Min.', work:'5 Min. Arbeit',
-    ingr:['2 Beutel Express-Reis','300 g Hähnchenbrust-Streifen','300 g TK-Paprika-Streifen','150 g TK-Blattspinat','1 TL Öl, Paprikapulver, Salz, Pfeffer, etwas Sojasoße'],
-    steps:[{t:'Öl in der großen Pfanne erhitzen, Hähnchenstreifen rundum anbraten.', min:5, l:'Hähnchen braten'},{t:'TK-Paprika und Spinat dazu und mitbraten.', min:5, l:'Gemüse braten'},{t:'Express-Reis dazu, durchschwenken und würzen.', min:3, l:'Reis erwärmen'}] },
-  4: { name:'Spinat-Feta-Pasta', time:'15 Min.', work:'5 Min. Arbeit',
-    ingr:['150 g Vollkornnudeln (Christoffer 65 g, Ariane 85 g)','200 g TK-Blattspinat','100 g Frischkäse light','75 g Feta light','Knoblauchpulver, Pfeffer, Muskat','Für mehr Eiweiß: Hähnchen-Rest vom Mittwoch'],
-    steps:[{t:'Nudeln in Salzwasser kochen (Zeit laut Packung).', min:10, l:'Nudeln kochen'},{t:'In den letzten 2 Minuten den TK-Spinat mit ins Nudelwasser geben.'},{t:'Abgießen und dabei eine Tasse Nudelwasser auffangen.'},{t:'Frischkäse und zerbröselten Feta unterrühren, mit etwas Nudelwasser cremig machen, würzen.'}] },
-  5: { name:'Blech-Hähnchen', time:'30 Min.', work:'5 Min. Arbeit',
-    ingr:['400 g Hähnchenbrust','450 g TK-Ofengemüse (ohne Kohl und Zwiebeln)','400 g TK-Kartoffelspalten','1 EL Rapsöl, Paprikapulver, Salz, Kräuter'],
-    steps:[{t:'Ofen auf 200 °C Umluft vorheizen.'},{t:'Hähnchen in Stücke schneiden, mit Gemüse und Kartoffelspalten aufs Blech, Öl und Gewürze drüber, durchmischen.'},{t:'Backen, nach der Hälfte einmal wenden.', min:28, l:'Blech-Hähnchen'}] },
-  6: { name:'Wrap-Abend', time:'10 Min.', work:'jeder rollt selbst',
-    ingr:['4 Vollkorn-Wraps','150 g Putenaufschnitt oder Hähnchen-Reste','Salat und 1 Gurke','200 g Kräuterquark light'],
-    steps:[{t:'Gurke in Streifen schneiden, Salat waschen – alles auf den Tisch.'},{t:'Optional: Wraps kurz ohne Fett in der Pfanne erwärmen.', min:1, l:'Wraps erwärmen'},{t:'Kräuterquark drauf, belegen, einrollen. Christoffer 1–2 Wraps, Ariane 2.'}] },
-  0: { name:'Freies Genussessen', time:'frei', work:'normale Portion',
-    ingr:['Was ihr mögt – ein Genussessen, kein Schlemmertag.'],
-    steps:[{t:'Gern doppelt kochen: Dann habt ihr Montag oder Dienstag Reste fürs Mittagessen.'},{t:'Ein Nudelgericht mit viel Gemüse geht immer.'}] }
+/* Zutaten-Katalog: [Name, Rewe-Abteilung, Einheit, Packungsgröße?, Packungsname?] */
+const ITEMS = {
+  nudeln:['Vollkornnudeln','Trockenware & Konserven','g',500,'Pck.'],
+  spaghetti:['Vollkorn-Spaghetti','Trockenware & Konserven','g',500,'Pck.'],
+  reis:['Express-Reis (250 g)','Trockenware & Konserven','Beutel'],
+  couscous:['Couscous','Trockenware & Konserven','g',500,'Pck.'],
+  hafer:['Haferflocken','Trockenware & Konserven','g',500,'Pck.'],
+  passiert:['Passierte Tomaten','Trockenware & Konserven','g',500,'Pck.'],
+  tomdose:['Stückige Tomaten','Trockenware & Konserven','g',400,'Dose(n)'],
+  kokos:['Kokosmilch light','Trockenware & Konserven','ml',400,'Dose(n)'],
+  thunfisch:['Thunfisch im eigenen Saft','Trockenware & Konserven','Dose'],
+  pesto:['Pesto Basilikum','Trockenware & Konserven','g',190,'Glas'],
+  nuesse:['Ungesalzene Nüsse','Trockenware & Konserven','g',200,'Pck.'],
+  nussmus:['Nussmus/Erdnussbutter (100 % Nuss)','Trockenware & Konserven','Glas'],
+  wraps:['Vollkorn-Wraps','Brot & Backwaren','Stk',6,'Pck.'],
+  toast:['Vollkorn-Toast','Brot & Backwaren','Scheiben',20,'Pck.'],
+  brot:['Vollkornbrot (geschnitten)','Brot & Backwaren','Stk'],
+  kart:['Drillinge/Kartoffeln','Obst & Gemüse','g'],
+  suesskart:['Süßkartoffeln','Obst & Gemüse','g'],
+  kuerbis:['Hokkaido-Kürbis','Obst & Gemüse','g'],
+  kirschtom:['Kirschtomaten','Obst & Gemüse','g',250,'Schale(n)'],
+  gurke:['Gurke','Obst & Gemüse','Stk'],
+  salat:['Salat','Obst & Gemüse','Stk'],
+  champ:['Braune Champignons','Obst & Gemüse','g',250,'Schale(n)'],
+  zitrone:['Zitrone','Obst & Gemüse','Stk'],
+  banane:['Bananen','Obst & Gemüse','Stk'],
+  apfel:['Äpfel','Obst & Gemüse','Stk'],
+  haehnchen:['Hähnchenbrust','Fleisch & Fisch','g'],
+  putenbrust:['Putenbrust/-schnitzel','Fleisch & Fisch','g'],
+  putenhack:['Putenhack','Fleisch & Fisch','g'],
+  rinderhack:['Mageres Rinderhack','Fleisch & Fisch','g'],
+  steak:['Rinder-Minutensteaks','Fleisch & Fisch','g'],
+  putenauf:['Putenaufschnitt','Fleisch & Fisch','g',100,'Pck.'],
+  wuerstchen:['Geflügel-Wiener','Fleisch & Fisch','Stk'],
+  lachs:['Lachsfilets','Tiefkühl','g',250,'Pck.'],
+  seelachs:['Seelachsfilet','Tiefkühl','g',400,'Pck.'],
+  garnelen:['Garnelen (roh)','Tiefkühl','g',250,'Pck.'],
+  spinat:['Blattspinat','Tiefkühl','g',450,'Pck.'],
+  zucchini:['Zucchini/Grillgemüse','Tiefkühl','g',750,'Beutel'],
+  moehren:['Möhren','Tiefkühl','g',750,'Beutel'],
+  paprika:['Paprika-Streifen','Tiefkühl','g',750,'Beutel'],
+  ofengem:['Ofengemüse ohne Kohl & Zwiebeln','Tiefkühl','g',750,'Beutel'],
+  spalten:['Kartoffelspalten','Tiefkühl','g',750,'Beutel'],
+  beeren:['Beeren','Tiefkühl','Beutel'],
+  kraeuter:['Kräuter (Dill/Petersilie)','Tiefkühl','Pck.'],
+  eier:['Eier','Kühlregal','Stk',10,'Pck. (10er)'],
+  milch:['Fettarme Milch','Kühlregal','ml',1000,'l'],
+  skyr:['Skyr natur','Kühlregal','g',450,'Becher'],
+  quark:['Magerquark','Kühlregal','g',500,'Becher'],
+  huette:['Hüttenkäse','Kühlregal','g',200,'Becher'],
+  joghurt:['Joghurt natur 1,5 %','Kühlregal','g',500,'Becher'],
+  kraeuterq:['Kräuterquark light','Kühlregal','g',250,'Becher'],
+  frischk:['Frischkäse light','Kühlregal','g',200,'Pck.'],
+  feta:['Feta light','Kühlregal','g',200,'Pck.'],
+  mozza:['Mozzarella light','Kühlregal','Stk'],
+  reibek:['Reibekäse light','Kühlregal','g',200,'Pck.'],
+  parmesan:['Parmesan am Stück','Kühlregal','g',100,'Stück'],
+  sahne:['Kochsahne 15 %','Kühlregal','ml',200,'Pck.'],
+  gnocchi:['Gnocchi','Kühlregal','g',500,'Pck.'],
+  tortellini:['Tortellini','Kühlregal','g',250,'Pck.'],
+  oel:['Rapsöl','Vorrat prüfen',''], gew:['Salz, Pfeffer, Paprikapulver, Kräuter','Vorrat prüfen',''], knobl:['Knoblauchpulver','Vorrat prüfen',''],
+  curry:['Currypulver','Vorrat prüfen',''], soja:['Sojasoße','Vorrat prüfen',''], honig:['Honig','Vorrat prüfen',''],
+  bruehe:['Gemüsebrühe','Vorrat prüfen',''], senf:['Senf','Vorrat prüfen',''],
+  wasser:['Stilles Wasser & Selter','Getränke','']
 };
-const WEEK_ORDER = [1,2,3,4,5,6,0];
+const SHOP_ORDER = ['Obst & Gemüse','Brot & Backwaren','Kühlregal','Fleisch & Fisch','Tiefkühl','Trockenware & Konserven','Getränke','Vorrat prüfen','Eigene Artikel'];
+/* Frühstück & Snacks für die Woche (immer auf der Liste) */
+const BASICS = [['milch',3000],['hafer',500],['skyr',1800],['quark',1000],['huette',400],['banane',4],['apfel',6],['beeren',1],['brot',1],['putenauf',200],['nuesse',200],['eier',4],['nussmus',1],['wasser']];
 
-const SHOP = [
-  ['Gemüse & Obst', [['kart','Drillinge/Kartoffeln','2 kg'],['spalten','Kartoffelspalten (TK, ungewürzt)','1 Beutel'],['salat','Salat','1–2'],['gurke','Gurke','1'],['banane','Bananen','4'],['apfel','Äpfel','6'],['beeren','Beeren (TK)','1 Beutel']]],
-  ['Tiefkühl', [['lachs','Lachsfilets','2 Pck. (ca. 500 g)'],['spinat','Blattspinat','2 Pck.'],['zucchini','Zucchini oder Grillgemüse','1 Beutel'],['moehren','Möhren','1 Beutel'],['paprika','Paprika-Streifen','1 Beutel'],['ofengem','Ofengemüse ohne Kohl & Zwiebeln','1 Beutel']]],
-  ['Fleisch & Wurst', [['putenhack','Putenhack','500 g'],['haehnchen','Hähnchenbrust bzw. -streifen','1 kg'],['putenauf','Putenaufschnitt','2 Pck.']]],
-  ['Kühlregal', [['milch','Fettarme Milch','3 l'],['skyr','Skyr natur','4 Becher'],['quark','Magerquark','2 Becher'],['huette','Hüttenkäse','2 Becher'],['frischk','Frischkäse light','2 Pck.'],['feta','Feta light','1 Pck.'],['kraeuterq','Kräuterquark light','1 Becher'],['eier','Eier','10 Stück']]],
-  ['Trockenware & Vorrat', [['nudeln','Vollkornnudeln','1 kg'],['reis','Express-Reis','3 Beutel'],['hafer','Haferflocken','500 g'],['tomaten','Passierte Tomaten','2 Pck.'],['wraps','Vollkorn-Wraps','1 Pck.'],['brot','Vollkornbrot (geschnitten)','1'],['nussmus','Nussmus/Erdnussbutter (100 % Nuss)','1 Glas'],['nuesse','Ungesalzene Nüsse','200 g'],['gewuerze','Rapsöl, Kräuter, Paprikapulver','falls nicht da']]],
-  ['Getränke', [['wasser','Stilles Wasser & Selter','nach Bedarf']]]
+/* Rezepte für 2 Personen: [id, Name, Tags, Minuten gesamt, Zutaten, Schritte [Text, Timer-Min., Timer-Name]] */
+const RCP = [
+ // ---------- Nudeln ----------
+ ['onepot','One-Pot-Nudeln',['Nudeln','Pute & Rind','fav'],20,[['nudeln',150],['putenhack',300],['passiert',500],['zucchini',300],['oel'],['gew']],
+  [['Öl im großen Topf erhitzen, Putenhack krümelig anbraten.',4,'Hack anbraten'],['Nudeln, passierte Tomaten, TK-Gemüse und 400 ml Wasser dazu, würzen, einmal aufkochen.'],['Deckel drauf und köcheln lassen, einmal umrühren.',12,'Nudeln köcheln'],['Abschmecken – fertig.']]],
+ ['spinatfeta','Spinat-Feta-Pasta',['Nudeln','Vegetarisch','fav'],15,[['nudeln',150],['spinat',200],['frischk',100],['feta',75],['knobl'],['gew']],
+  [['Nudeln in Salzwasser kochen.',10,'Nudeln kochen'],['In den letzten 2 Minuten den TK-Spinat mit ins Wasser geben.'],['Abgießen, eine Tasse Nudelwasser auffangen.'],['Frischkäse und zerbröselten Feta unterrühren, mit Nudelwasser cremig machen. Tipp: Hähnchen-Reste dazu.']]],
+ ['lachspasta','Lachs-Sahne-Pasta mit Spinat',['Nudeln','Fisch'],20,[['nudeln',150],['lachs',250],['spinat',150],['sahne',150],['zitrone',1],['gew']],
+  [['Nudeln kochen.',10,'Nudeln kochen'],['Lachs (gern direkt gefroren) in der Pfanne mit wenig Öl garen, dann zerzupfen.',6,'Lachs braten'],['Kochsahne und Spinat dazu, kurz köcheln, mit Zitrone abschmecken.',4,'Soße köcheln'],['Nudeln unterheben.']]],
+ ['bolo','Schnelle Puten-Bolognese',['Nudeln','Pute & Rind'],20,[['spaghetti',150],['putenhack',300],['passiert',500],['moehren',150],['oel'],['gew']],
+  [['Hack in der Pfanne krümelig braten, TK-Möhren dazu.',5,'Hack braten'],['Passierte Tomaten dazu, würzen und köcheln lassen.',12,'Soße köcheln'],['Parallel Spaghetti kochen.',10,'Spaghetti kochen'],['Alles mischen – fertig.']]],
+ ['nudelauflauf','Nudelauflauf Tomate-Mozzarella',['Nudeln','Vegetarisch','Ofen'],30,[['nudeln',150],['passiert',500],['zucchini',300],['mozza',1],['gew']],
+  [['Ofen auf 200 °C vorheizen, Nudeln 2 Minuten kürzer kochen.',8,'Nudeln vorkochen'],['Nudeln, passierte Tomaten und TK-Gemüse in eine Auflaufform, würzen, Mozzarella drauf zupfen.'],['Überbacken.',15,'Auflauf im Ofen']]],
+ ['thunfischpasta','Thunfisch-Tomaten-Pasta',['Nudeln','Fisch'],15,[['nudeln',150],['thunfisch',2],['passiert',500],['zucchini',200],['knobl'],['gew']],
+  [['Nudeln kochen.',10,'Nudeln kochen'],['Passierte Tomaten mit TK-Gemüse in einem Topf erhitzen, würzen.',8,'Soße köcheln'],['Thunfisch abtropfen, unterrühren, mit den Nudeln mischen.']]],
+ ['garnelenpasta','Garnelen-Zitronen-Spaghetti',['Nudeln','Fisch'],15,[['spaghetti',150],['garnelen',250],['kirschtom',250],['spinat',100],['zitrone',1],['oel'],['knobl']],
+  [['Spaghetti kochen.',10,'Spaghetti kochen'],['Garnelen mit halbierten Kirschtomaten in Öl braten.',4,'Garnelen braten'],['Spinat dazu, mit Zitrone und Knoblauchpulver abschmecken, Spaghetti unterheben.']]],
+ ['pestopasta','Pesto-Hähnchen-Pasta',['Nudeln','Hähnchen'],15,[['nudeln',150],['haehnchen',300],['pesto',60],['kirschtom',200],['oel']],
+  [['Nudeln kochen.',10,'Nudeln kochen'],['Hähnchen in Streifen braten, Kirschtomaten kurz mitbraten.',7,'Hähnchen braten'],['Nudeln und Pesto unterheben (Pesto sparsam – 1 EL pro Person).']]],
+ ['tortellini','Tortellini in Tomaten-Spinat-Soße',['Nudeln','Vegetarisch'],12,[['tortellini',400],['passiert',500],['spinat',150],['parmesan',20],['gew']],
+  [['Passierte Tomaten und TK-Spinat im Topf erhitzen, würzen.',6,'Soße köcheln'],['Tortellini direkt in der Soße garziehen lassen.',4,'Tortellini'],['Mit etwas Parmesan servieren.']]],
+ ['kuerbispasta','Cremige Kürbis-Pasta',['Nudeln','Vegetarisch'],25,[['nudeln',150],['kuerbis',500],['frischk',100],['parmesan',30],['bruehe'],['gew']],
+  [['Kürbis entkernen und würfeln (Hokkaido muss nicht geschält werden), mit 200 ml Brühe weich kochen.',15,'Kürbis kochen'],['Parallel Nudeln kochen.',10,'Nudeln kochen'],['Kürbis mit Frischkäse pürieren, Nudeln unterheben, Parmesan drüber.']]],
+ ['lasagnetopf','Faule Lasagne aus dem Topf',['Nudeln','Pute & Rind'],25,[['nudeln',150],['rinderhack',300],['passiert',500],['frischk',100],['reibek',40],['gew']],
+  [['Hack im großen Topf krümelig braten.',5,'Hack braten'],['Passierte Tomaten, 400 ml Wasser und Nudeln dazu, köcheln lassen.',13,'Nudeln köcheln'],['Frischkäse einrühren, Reibekäse drüber, Deckel 2 Minuten drauf – fertig.']]],
+ ['nudelsalat','Nudelsalat mit Pute & Gurke',['Nudeln','Pute & Rind','Kalt'],15,[['nudeln',150],['putenauf',150],['gurke',1],['kirschtom',200],['joghurt',150],['senf'],['gew']],
+  [['Nudeln kochen und kalt abschrecken.',10,'Nudeln kochen'],['Gurke, Tomaten und Putenaufschnitt klein schneiden.'],['Joghurt mit 1 TL Senf, Salz und Pfeffer verrühren, alles mischen. Hält sich auch fürs Mittagessen am nächsten Tag.']]],
+ ['gnocchipfanne','Gnocchi-Pfanne mit Hähnchen & Spinat',['Nudeln','Hähnchen','Pfanne'],15,[['gnocchi',400],['haehnchen',250],['spinat',150],['kirschtom',200],['oel'],['gew']],
+  [['Gnocchi in Öl goldbraun braten, herausnehmen.',6,'Gnocchi braten'],['Hähnchenstreifen in derselben Pfanne braten.',6,'Hähnchen braten'],['Spinat, Tomaten und Gnocchi dazu, kurz durchschwenken.']]],
+ ['gnocchiofen','Ofen-Gnocchi mit Tomaten & Mozzarella',['Nudeln','Vegetarisch','Ofen'],25,[['gnocchi',400],['kirschtom',300],['zucchini',250],['mozza',1],['oel'],['gew']],
+  [['Ofen auf 200 °C vorheizen.'],['Gnocchi, Kirschtomaten und TK-Gemüse mit Öl und Gewürzen in eine Form geben.'],['Backen.',15,'Gnocchi im Ofen'],['Mozzarella drauf zupfen und noch kurz überbacken.',5,'Überbacken']]],
+ // ---------- Hähnchen ----------
+ ['reispfanne','Hähnchen-Reis-Pfanne',['Hähnchen','Pfanne','fav'],15,[['reis',2],['haehnchen',300],['paprika',300],['spinat',150],['oel'],['soja'],['gew']],
+  [['Hähnchenstreifen in Öl anbraten.',5,'Hähnchen braten'],['TK-Paprika und Spinat dazu und mitbraten.',5,'Gemüse braten'],['Express-Reis dazu, mit etwas Sojasoße abschmecken.',3,'Reis erwärmen']]],
+ ['blechhaehnchen','Blech-Hähnchen mit Ofengemüse',['Hähnchen','Ofen','fav'],30,[['haehnchen',400],['ofengem',450],['spalten',400],['oel'],['gew']],
+  [['Ofen auf 200 °C Umluft vorheizen.'],['Hähnchen in Stücke, mit Gemüse und Kartoffelspalten aufs Blech, Öl und Gewürze drüber.'],['Backen, nach der Hälfte wenden.',28,'Blech-Hähnchen']]],
+ ['curry','Mildes Hähnchen-Curry',['Hähnchen','Topf'],20,[['haehnchen',350],['kokos',400],['paprika',200],['spinat',100],['reis',2],['curry'],['oel']],
+  [['Hähnchenwürfel in Öl anbraten, 1 TL Curry kurz mitrösten.',5,'Hähnchen braten'],['Kokosmilch und TK-Paprika dazu, köcheln lassen.',10,'Curry köcheln'],['Spinat unterrühren, Reis in der Mikrowelle erwärmen.']]],
+ ['haehnchenwraps','Hähnchen-Wraps aus der Pfanne',['Hähnchen','Pfanne'],15,[['wraps',4],['haehnchen',300],['paprika',150],['kraeuterq',150],['salat',1],['gew']],
+  [['Hähnchenstreifen mit TK-Paprika braten, würzen.',8,'Hähnchen braten'],['Wraps mit Kräuterquark bestreichen, Salat und Hähnchen drauf, einrollen.']]],
+ ['kuerbishaehnchen','Hähnchen mit Kürbis & Kartoffeln vom Blech',['Hähnchen','Ofen'],35,[['haehnchen',350],['kuerbis',500],['kart',500],['oel'],['gew']],
+  [['Ofen auf 200 °C vorheizen. Kürbis und Kartoffeln würfeln, mit Öl aufs Blech.'],['Vorbacken.',15,'Gemüse vorbacken'],['Hähnchenstücke dazulegen, würzen, fertig backen.',18,'Hähnchen im Ofen']]],
+ ['suesskarthaehnchen','Süßkartoffel-Hähnchen-Blech mit Joghurt-Dip',['Hähnchen','Ofen'],35,[['haehnchen',350],['suesskart',500],['zucchini',250],['joghurt',150],['oel'],['gew'],['knobl']],
+  [['Ofen auf 200 °C. Süßkartoffeln würfeln, mit Öl aufs Blech.',10,'Süßkartoffeln vorbacken'],['Hähnchen und TK-Zucchini dazu, würzen, fertig backen.',20,'Hähnchen im Ofen'],['Joghurt mit Knoblauchpulver und Salz als Dip.']]],
+ ['honigsoja','Honig-Soja-Hähnchen mit Reis',['Hähnchen','Pfanne'],15,[['haehnchen',350],['reis',2],['moehren',250],['soja'],['honig'],['oel']],
+  [['Hähnchenwürfel in Öl braten.',6,'Hähnchen braten'],['TK-Möhren dazu, 2 EL Sojasoße und 1 TL Honig, kurz einkochen.',5,'Einkochen'],['Mit dem Reis servieren.']]],
+ ['haehnchenbowl','Hähnchen-Bowl mit Reis & Joghurt',['Hähnchen','Kalt'],15,[['haehnchen',300],['reis',1],['salat',1],['gurke',1],['kirschtom',200],['joghurt',150],['gew']],
+  [['Hähnchen in Streifen braten.',8,'Hähnchen braten'],['Reis erwärmen, Salat, Gurke und Tomaten schneiden.'],['Alles in Schüsseln, Joghurt mit Salz und Kräutern als Soße drüber.']]],
+ ['geschnetzeltes','Hähnchen-Geschnetzeltes mit Champignons',['Hähnchen','Pfanne'],20,[['haehnchen',350],['champ',250],['sahne',150],['reis',2],['oel'],['gew']],
+  [['Hähnchenstreifen anbraten, herausnehmen.',5,'Hähnchen braten'],['Champignons in Scheiben braten.',5,'Pilze braten'],['Kochsahne und Hähnchen dazu, kurz köcheln, mit Reis servieren. (Pilze nur, wenn sie dir bekommen.)',3,'Soße']]],
+ ['fetahaehnchen','Ofen-Hähnchen mit Feta & Tomaten',['Hähnchen','Ofen'],30,[['haehnchen',350],['kirschtom',300],['feta',100],['kart',500],['oel'],['gew']],
+  [['Ofen auf 200 °C. Kartoffeln halbieren, aufs Blech.',10,'Kartoffeln vorbacken'],['Hähnchen und Kirschtomaten dazu, Feta drüber bröseln.'],['Fertig backen.',20,'Hähnchen im Ofen']]],
+ ['nudelsuppe','Hähnchen-Nudelsuppe',['Hähnchen','Topf','Suppe'],25,[['haehnchen',250],['moehren',250],['nudeln',100],['bruehe'],['kraeuter',1]],
+  [['1,2 l Brühe aufkochen, Hähnchenbrust im Ganzen darin garziehen lassen.',12,'Hähnchen garen'],['Hähnchen herausnehmen und zerzupfen, Möhren und Nudeln in die Brühe.',9,'Nudeln in der Suppe'],['Hähnchen zurück, Kräuter drüber.']]],
+ ['couscouspfanne','Hähnchen-Couscous-Pfanne',['Hähnchen','Pfanne'],15,[['couscous',150],['haehnchen',300],['zucchini',250],['feta',50],['bruehe'],['oel']],
+  [['Couscous mit 200 ml heißer Brühe übergießen, quellen lassen.',5,'Couscous quellen'],['Hähnchen und TK-Zucchini braten.',8,'Hähnchen braten'],['Couscous unterheben, Feta drüber.']]],
+ // ---------- Pute & Rind ----------
+ ['putensahne','Puten-Geschnetzeltes Paprika-Sahne',['Pute & Rind','Pfanne'],20,[['putenbrust',350],['paprika',250],['sahne',150],['reis',2],['oel'],['gew']],
+  [['Putenstreifen anbraten.',5,'Pute braten'],['TK-Paprika dazu, mitbraten.',5,'Paprika braten'],['Kochsahne angießen, kurz köcheln, mit Reis servieren.',3,'Soße']]],
+ ['hackreis','Hack-Reis-Pfanne mit Zucchini',['Pute & Rind','Pfanne'],15,[['putenhack',300],['reis',2],['zucchini',300],['passiert',250],['gew']],
+  [['Hack krümelig braten.',5,'Hack braten'],['TK-Zucchini und passierte Tomaten dazu.',5,'Köcheln'],['Reis unterheben, würzen.']]],
+ ['minutensteak','Minutensteaks mit Ofenkartoffeln & Kräuterquark',['Pute & Rind','Ofen'],35,[['steak',300],['kart',600],['kraeuterq',200],['gurke',1],['oel'],['gew']],
+  [['Kartoffeln halbieren, mit Öl aufs Blech, 200 °C.',30,'Ofenkartoffeln'],['Kurz vor Ende die Steaks pro Seite 1 Minute scharf anbraten.',2,'Steaks braten'],['Mit Kräuterquark und Gurke servieren.']]],
+ ['steakofengem','Rindersteak-Streifen mit Ofengemüse',['Pute & Rind','Ofen'],30,[['steak',300],['ofengem',450],['spalten',400],['oel'],['gew']],
+  [['Ofengemüse und Kartoffelspalten aufs Blech, 200 °C.',25,'Ofengemüse'],['Steaks kurz scharf anbraten, in Streifen schneiden.',2,'Steaks braten']]],
+ ['frikadellen','Ofen-Frikadellen mit Kartoffeln & Möhren',['Pute & Rind','Ofen'],35,[['putenhack',400],['eier',1],['hafer',30],['kart',600],['moehren',300],['senf'],['gew']],
+  [['Hack mit Ei, Haferflocken, 1 TL Senf und Gewürzen verkneten, 8 Frikadellen formen.'],['Mit Kartoffeln und TK-Möhren aufs Blech, 200 °C.',30,'Frikadellen im Ofen']]],
+ ['chili','Mildes Chili ohne Bohnen',['Pute & Rind','Topf'],25,[['rinderhack',300],['tomdose',400],['paprika',250],['reis',2],['joghurt',100],['gew']],
+  [['Hack krümelig braten.',5,'Hack braten'],['Tomaten und TK-Paprika dazu, mild würzen, köcheln lassen.',15,'Chili köcheln'],['Mit Reis und einem Klecks Joghurt servieren.']]],
+ ['hackgnocchi','Hack-Gnocchi-Auflauf',['Pute & Rind','Nudeln','Ofen'],30,[['gnocchi',400],['putenhack',300],['passiert',500],['mozza',1],['gew']],
+  [['Ofen auf 200 °C. Hack in der Pfanne krümelig braten.',5,'Hack braten'],['Mit Gnocchi und passierten Tomaten in eine Form, Mozzarella drauf.'],['Überbacken.',20,'Auflauf im Ofen']]],
+ ['putenschnitzel','Putenschnitzel mit Kartoffeln & Gurkensalat',['Pute & Rind','Pfanne'],25,[['putenbrust',350],['kart',600],['gurke',1],['joghurt',150],['oel'],['gew']],
+  [['Kartoffeln in Salzwasser kochen.',20,'Kartoffeln kochen'],['Gurke hobeln, mit Joghurt, Salz und Dill mischen.'],['Schnitzel kurz vor Schluss pro Seite braten.',3,'Schnitzel braten']]],
+ ['burgerbowl','Burger-Bowl',['Pute & Rind','Ofen'],25,[['rinderhack',300],['spalten',400],['salat',1],['gurke',1],['kirschtom',150],['reibek',40],['senf'],['gew']],
+  [['Kartoffelspalten in den Ofen.',22,'Kartoffelspalten'],['Hack krümelig braten, würzen.',6,'Hack braten'],['Salat, Gurke, Tomaten in Schüsseln, Hack und Spalten drauf, Käse drüber. Soße: Joghurt mit Senf.']]],
+ ['putengyros','Puten-Gyros mit Reis & Tzatziki',['Pute & Rind','Pfanne'],15,[['putenbrust',350],['reis',2],['joghurt',200],['gurke',1],['knobl'],['gew']],
+  [['Putenstreifen mit Paprikapulver und Kräutern scharf braten.',7,'Gyros braten'],['Gurke raspeln, mit Joghurt, Knoblauchpulver und Salz verrühren.'],['Mit Reis servieren.']]],
+ ['kartoffelsuppe','Kartoffel-Möhren-Suppe mit Würstchen',['Pute & Rind','Topf','Suppe'],25,[['kart',600],['moehren',300],['wuerstchen',4],['sahne',100],['bruehe']],
+  [['Kartoffeln würfeln, mit Möhren in 1 l Brühe kochen.',18,'Suppe kochen'],['Grob pürieren, Kochsahne dazu.'],['Würstchen in Scheiben darin erwärmen.',3,'Würstchen erwärmen']]],
+ // ---------- Fisch ----------
+ ['lachsblech','Lachs vom Blech',['Fisch','Ofen','fav'],35,[['lachs',250],['kart',600],['moehren',400],['zitrone',1],['oel'],['gew']],
+  [['Ofen auf 200 °C Umluft. Drillinge halbieren, mit Öl aufs Blech.'],['Kartoffeln vorbacken.',15,'Kartoffeln vorbacken'],['Lachs (gern gefroren) und TK-Möhren dazulegen, würzen.'],['Fertig backen.',20,'Lachs im Ofen']]],
+ ['seelachsofen','Seelachs auf Tomaten-Zucchini',['Fisch','Ofen'],30,[['seelachs',400],['kirschtom',250],['zucchini',250],['kart',500],['oel'],['gew']],
+  [['Ofen auf 200 °C. Kartoffeln halbieren, aufs Blech.',10,'Kartoffeln vorbacken'],['Gemüse und Tomaten dazu, Fisch drauflegen, würzen, mit Öl beträufeln.'],['Fertig backen.',20,'Fisch im Ofen']]],
+ ['lachsbowl','Lachs-Teriyaki-Bowl',['Fisch','Pfanne'],15,[['lachs',250],['reis',2],['moehren',200],['gurke',1],['soja'],['honig']],
+  [['Lachs in der Pfanne garen.',8,'Lachs braten'],['2 EL Sojasoße und 1 TL Honig dazu, kurz glasieren. Möhren mitgaren.',3,'Glasieren'],['Mit Reis und Gurkenscheiben in Schüsseln anrichten.']]],
+ ['fischcurry','Fisch-Kokos-Curry',['Fisch','Topf'],20,[['seelachs',400],['kokos',400],['spinat',150],['reis',2],['curry']],
+  [['Kokosmilch mit 1 TL Curry aufkochen.'],['Fisch in Stücken darin garziehen lassen.',8,'Fisch garen'],['Spinat unterrühren, mit Reis servieren.']]],
+ ['garnelenreis','Garnelen-Gemüse-Reis',['Fisch','Pfanne'],15,[['garnelen',250],['reis',2],['paprika',250],['zucchini',200],['soja'],['oel']],
+  [['TK-Gemüse in Öl braten.',6,'Gemüse braten'],['Garnelen dazu.',4,'Garnelen braten'],['Reis unterheben, mit Sojasoße abschmecken.']]],
+ ['thunfischsalat','Kartoffelsalat mit Thunfisch & Ei',['Fisch','Kalt'],25,[['kart',600],['thunfisch',2],['eier',2],['gurke',1],['joghurt',150],['senf']],
+  [['Kartoffeln und Eier kochen (Eier nach 10 Min. raus).',20,'Kartoffeln kochen'],['Kartoffeln und Gurke schneiden, Thunfisch und Eier dazu.'],['Mit Joghurt, Senf, Salz und Pfeffer anmachen.']]],
+ ['lachsgnocchi','Lachs-Spinat-Gnocchi aus dem Ofen',['Fisch','Nudeln','Ofen'],30,[['lachs',250],['gnocchi',400],['spinat',200],['frischk',75],['gew']],
+  [['Ofen auf 200 °C. Gnocchi und TK-Spinat in eine Form, Frischkäse in Klecksen dazu.'],['Lachs obendrauf legen, würzen.'],['Backen.',25,'Auflauf im Ofen']]],
+ ['seelachsdill','Seelachs mit Senf-Dill-Soße',['Fisch','Topf'],25,[['seelachs',400],['kart',600],['joghurt',150],['kraeuter',1],['senf']],
+  [['Kartoffeln kochen.',20,'Kartoffeln kochen'],['Fisch in wenig Wasser mit Deckel garziehen lassen.',8,'Fisch garen'],['Joghurt mit 1 TL Senf und Dill verrühren und dazu servieren.']]],
+ // ---------- Vegetarisch & Eier ----------
+ ['wrapabend','Wrap-Abend',['Abendbrot','Kalt','fav'],10,[['wraps',4],['putenauf',150],['salat',1],['gurke',1],['kraeuterq',200]],
+  [['Gurke in Streifen, Salat waschen – alles auf den Tisch.'],['Optional: Wraps kurz ohne Fett in der Pfanne erwärmen.',1,'Wraps erwärmen'],['Kräuterquark drauf, belegen, einrollen – jeder selbst.']]],
+ ['ruehrei','Rührei mit Spinat & Toast',['Vegetarisch','Pfanne'],10,[['eier',6],['spinat',150],['toast',4],['kirschtom',150],['gew']],
+  [['TK-Spinat in der Pfanne auftauen lassen.',3,'Spinat'],['Verquirlte Eier dazu, bei mittlerer Hitze stocken lassen.',4,'Rührei'],['Mit Toast und Tomaten servieren.']]],
+ ['shakshuka','Shakshuka (ohne Zwiebeln)',['Vegetarisch','Pfanne'],25,[['eier',5],['tomdose',800],['paprika',250],['brot',1],['gew']],
+  [['TK-Paprika und Tomaten in einer Pfanne einkochen, würzen.',12,'Soße einkochen'],['Mulden drücken, Eier hineinschlagen, Deckel drauf.',8,'Eier stocken'],['Mit Brot direkt aus der Pfanne essen.']]],
+ ['frittata','Ofen-Frittata mit Gemüse & Feta',['Vegetarisch','Ofen'],30,[['eier',7],['zucchini',200],['paprika',150],['feta',75],['salat',1],['gew']],
+  [['Ofen auf 180 °C. TK-Gemüse in eine gefettete Form.'],['Eier verquirlen, würzen, drübergießen, Feta drauf.'],['Backen.',25,'Frittata im Ofen'],['Dazu Salat.']]],
+ ['ofenkartoffel','Ofenkartoffeln mit Kräuterquark & Hüttenkäse',['Vegetarisch','Ofen'],35,[['kart',1000],['kraeuterq',250],['huette',200],['gurke',1],['oel'],['gew']],
+  [['Kartoffeln halbieren, mit Öl aufs Blech, 200 °C.',32,'Ofenkartoffeln'],['Kräuterquark mit Hüttenkäse verrühren, Gurke schneiden – fertig.']]],
+ ['kuerbiscurry','Kürbis-Kokos-Curry',['Vegetarisch','Topf'],25,[['kuerbis',500],['kokos',400],['spinat',100],['reis',2],['eier',4],['curry']],
+  [['Kürbis würfeln, mit Kokosmilch und 1 TL Curry köcheln.',15,'Curry köcheln'],['Eier hart kochen (10 Min.) – als Eiweiß dazu.',10,'Eier kochen'],['Spinat unterrühren, mit Reis servieren.']]],
+ ['wrappizza','Wrap-Pizza aus dem Ofen',['Abendbrot','Ofen'],15,[['wraps',4],['passiert',200],['mozza',1],['putenauf',100],['paprika',100]],
+  [['Ofen auf 220 °C. Wraps aufs Blech, dünn mit Tomaten bestreichen.'],['Pute, TK-Paprika und Mozzarella drauf.'],['Knusprig backen.',8,'Wrap-Pizza']]],
+ ['toastofen','Überbackene Toasts mit Pute & Tomate',['Abendbrot','Ofen'],15,[['toast',8],['putenauf',150],['kirschtom',150],['reibek',60],['salat',1]],
+  [['Ofen auf 200 °C. Toasts mit Pute und Tomatenscheiben belegen, Käse drauf.'],['Überbacken.',10,'Toasts im Ofen'],['Dazu Salat.']]],
+ ['tomatensuppe','Tomatensuppe mit Mozzarella',['Vegetarisch','Topf','Suppe'],15,[['passiert',1000],['mozza',1],['frischk',50],['brot',1],['bruehe'],['gew']],
+  [['Passierte Tomaten mit 300 ml Brühe aufkochen, Frischkäse einrühren.',8,'Suppe köcheln'],['Mozzarella in Stücken in die Teller, Suppe drüber, Brot dazu.']]],
+ ['kuerbissuppe','Kürbissuppe mit Garnelen',['Fisch','Topf','Suppe'],25,[['kuerbis',800],['kokos',200],['garnelen',150],['bruehe']],
+  [['Kürbis würfeln, in 600 ml Brühe weich kochen.',15,'Kürbis kochen'],['Mit Kokosmilch pürieren.'],['Garnelen kurz in der Pfanne braten und auf die Suppe geben.',4,'Garnelen braten']]],
+ ['couscoussalat','Couscous-Salat mit Feta',['Vegetarisch','Kalt'],15,[['couscous',150],['gurke',1],['kirschtom',200],['feta',100],['zitrone',1],['bruehe'],['oel']],
+  [['Couscous mit 200 ml heißer Brühe quellen lassen.',5,'Couscous quellen'],['Gurke und Tomaten würfeln, Feta bröseln.'],['Alles mit Zitrone und 1 EL Öl mischen. Tipp: Hähnchen-Reste dazu.']]],
+ ['quarkbrot','Abendbrot mit Hüttenkäse & Ei',['Abendbrot','Kalt'],10,[['brot',1],['huette',200],['eier',4],['gurke',1],['kirschtom',150],['putenauf',100]],
+  [['Eier kochen.',9,'Eier kochen'],['Brot, Hüttenkäse, Gemüse und Aufschnitt auf den Tisch – fertig.']]],
+ // ---------- Sonderfälle ----------
+ ['reste','Reste-Abend',['Kalt'],5,[],[['Was vom Wochenende oder vom Vortag übrig ist, aufwärmen. Spart Geld und Zeit.']]],
+ ['frei','Freies Genussessen',['fav'],0,[],[['Was ihr mögt – ein Genussessen in normaler Portion, kein Schlemmertag.'],['Gern doppelt kochen: Dann gibt es Montag Reste fürs Mittagessen.']]]
 ];
-const SHOP_CATS = SHOP.map(c => c[0]);
+const RECIPES = {}; RCP.forEach(([id, n, tags, min, i, s]) => { RECIPES[id] = { id, name: n, tags, min, ingr: i, steps: s }; });
+const DEFAULT_WEEK = { 1:'onepot', 2:'lachsblech', 3:'reispfanne', 4:'spinatfeta', 5:'blechhaehnchen', 6:'wrapabend', 0:'frei' };
+const WEEK_ORDER = [1,2,3,4,5,6,0];
+const FILTERS = [['alle','Alle'],['fav','Lieblinge'],['Nudeln','Nudeln'],['Hähnchen','Hähnchen'],['Pute & Rind','Pute & Rind'],['Fisch','Fisch'],['Vegetarisch','Vegetarisch'],['Abendbrot','Abendbrot'],['Ofen','Ofen'],['schnell','≤ 15 Min.'],['Suppe','Suppe']];
+const CARB_KEYS = ['nudeln','spaghetti','reis','couscous','kart','suesskart','gnocchi','tortellini','spalten','wraps','toast','brot'];
 
 /* =========================================================
    Datenspeicher + Abgleich (Google-Tabelle via Apps Script)
@@ -721,7 +891,7 @@ function weekStrip(){
 
 function viewHeute(){
   const p = me(), o = other(p), t = today(), wd = parseYmd(t).getDay(), s = settings();
-  const r = RECIPES[wd]; const st = trainStats(p); const b = bodyStats(p);
+  const r = recipeFor(t); const st = trainStats(p); const b = bodyStats(p);
   const w = water(p), wg = s.waterGoal; const done = trainedOn(p, t);
   const glasses = Array.from({length: Math.max(wg, w)}, (_, i) => `<span class="glass ${i < w ? 'full' : ''}"></span>`).join('');
   const hour = new Date().getHours(); const greet = hour < 11 ? 'Guten Morgen' : hour < 17 ? 'Hallo' : 'Guten Abend';
@@ -750,7 +920,7 @@ function viewHeute(){
   </section>` : ''}
   <section class="card">
     <div class="eyebrow">Abendessen heute · 19 Uhr</div>
-    <div class="row between" style="margin-top:6px"><div class="grow"><h2>${esc(r.name)}</h2><div class="muted small">${esc(r.time)} · ${esc(r.work)}</div></div><button class="btn sm" data-act="recipe" data-wd="${wd}">Rezept & Timer</button></div>
+    <div class="row between" style="margin-top:6px"><div class="grow"><h2>${esc(r.name)}</h2><div class="muted small">${esc([minLabel(r), mainTags(r)].filter(Boolean).join(' · '))}</div></div><button class="btn sm" data-act="recipe" data-id="${r.id}" data-date="${t}">Rezept & Timer</button></div>
     <p class="small muted" style="margin:10px 0 0">Tagesziel: ca. ${fmtNum(PEOPLE[p].kcal,0)} kcal · ${PEOPLE[p].protein} g Eiweiß</p>
   </section>
   <section class="card">
@@ -989,25 +1159,117 @@ function finishWorkout(partial){
   setTimeout(checkBadges, 600);
 }
 
-/* --- Essen --- */
+/* --- Essen: Wochenplan, Rezepte, Planer --- */
+const weekOf = d => { const dd = parseYmd(d); return addDays(d, -((dd.getDay() + 6) % 7)); };
+function weekPlan(mon){ const r = get('plan|' + mon); return r && r.days ? Object.assign({}, DEFAULT_WEEK, r.days) : null; }
+const planOrDefault = mon => weekPlan(mon) || Object.assign({}, DEFAULT_WEEK);
+function recipeFor(date){ const id = planOrDefault(weekOf(date))[parseYmd(date).getDay()]; return RECIPES[id] || RECIPES.frei; }
+const weekLabel = mon => `${fmtDate(mon)}–${fmtDate(addDays(mon, 6))}`;
+const minLabel = r => r.min ? `${r.min} Min.` : 'frei';
+const mainTags = r => r.tags.filter(t => t !== 'fav').join(' · ');
+function fmtQty(key, q){
+  const it = ITEMS[key]; if (!it || !it[2] || !q) return '';
+  const [, , unit, pack, pname] = it;
+  if (unit === 'ml' && pname === 'l') return fmtNum(q / 1000) + ' l';
+  const base = unit === 'g' ? (q >= 1000 ? fmtNum(q / 1000) + ' kg' : q + ' g') : unit === 'ml' ? q + ' ml' : unit === 'Stk' ? q + ' Stk.' : q + ' ' + unit;
+  return pack ? `${Math.ceil(q / pack)} ${pname} · ${base}` : base;
+}
+function ingrLine(key, q){
+  const it = ITEMS[key]; if (!it) return key;
+  if (!q || !it[2]) return it[0];
+  const u = it[2]; return `${u === 'Stk' ? q + ' ×' : q + ' ' + u} ${it[0]}`;
+}
+let ESSEN_W = 0;
 function viewEssen(){
-  const p = me(); const wdT = parseYmd(today()).getDay(); const dp = DAYPLAN[p];
+  const p = me(), t = today(), dp = DAYPLAN[p];
+  const cur = weekOf(t), nxt = addDays(cur, 7), mon = ESSEN_W ? nxt : cur;
+  const planned = !!weekPlan(mon), days = planOrDefault(mon), dow = parseYmd(t).getDay();
+  const prompt = !weekPlan(nxt) && [5,6,0].includes(dow);
   return `
-  <section class="card tint"><div class="eyebrow">${esc(PEOPLE[p].name)}s Tag</div><h2 style="margin:4px 0 6px">ca. ${fmtNum(PEOPLE[p].kcal,0)} kcal · ${PEOPLE[p].protein} g Eiweiß</h2>
+  ${prompt ? `<section class="card tint"><div class="eyebrow">${dow === 0 ? 'Heute ist Planungstag' : 'Bald ist Planungstag'}</div><h2 style="margin:4px 0 6px">Nächste Woche planen</h2><p class="small muted" style="margin:0 0 12px">Sucht euch für jeden Tag ein Faulenzer-Gericht aus – die Einkaufsliste entsteht automatisch.</p><button class="btn big block" data-act="planOpen" data-mon="${nxt}">🗓 Woche ${weekLabel(nxt)} planen</button></section>` : ''}
+  <section>
+    <div class="row between" style="margin:4px 2px 8px;gap:8px;flex-wrap:wrap"><div class="seg"><button class="${!ESSEN_W ? 'on' : ''}" data-act="essenW" data-w="0">Diese Woche</button><button class="${ESSEN_W ? 'on' : ''}" data-act="essenW" data-w="1">Nächste Woche</button></div>
+      <button class="btn sm soft" data-act="planOpen" data-mon="${mon}">${planned ? 'Ändern' : 'Planen'}</button></div>
+    <p class="small muted" style="margin:0 2px 8px">${weekLabel(mon)} · ${planned ? '<span style="color:var(--ok);font-weight:650">✓ geplant</span>' : 'noch nicht geplant – Standardwoche'}</p>
+    ${WEEK_ORDER.map(wd => { const r = RECIPES[days[wd]] || RECIPES.frei; const d = addDays(mon, (wd + 6) % 7);
+      return `<button class="day ${d === t ? 'today' : ''}" data-act="recipe" data-id="${r.id}" data-date="${d}"><span class="wd">${WD[wd]}</span><span class="grow"><b>${esc(r.name)}</b><span class="small muted" style="display:block">${esc([minLabel(r), mainTags(r)].filter(Boolean).join(' · '))}</span></span><span class="muted">›</span></button>`; }).join('')}
+    <button class="btn ghost block" style="margin-top:10px" data-act="browse">Alle ${RCP.length} Rezepte ansehen</button>
+  </section>
+  <section class="card"><div class="eyebrow">${esc(PEOPLE[p].name)}s Tag</div><h2 style="margin:4px 0 6px">ca. ${fmtNum(PEOPLE[p].kcal,0)} kcal · ${PEOPLE[p].protein} g Eiweiß</h2>
     ${dp.meals.map(m => `<div class="meal"><b>${esc(m[0])}</b><div><b>${esc(m[1])}</b><div class="small muted">${esc(m[2])}</div></div></div>`).join('')}
   </section>
-  <section><div class="row between" style="margin:6px 2px 8px"><h2>Abendessen der Woche</h2><span class="pill">Faulenzer-Rezepte</span></div>
-    ${WEEK_ORDER.map(wd => { const r = RECIPES[wd]; return `<button class="day ${wd === wdT ? 'today' : ''}" data-act="recipe" data-wd="${wd}"><span class="wd">${WD[wd]}</span><span class="grow"><b>${esc(r.name)}</b><span class="small muted" style="display:block">${esc(r.time)} · ${esc(r.work)}</span></span><span class="muted">›</span></button>`; }).join('')}
-  </section>
-  <details class="card"><summary>Tipps für ${esc(PEOPLE[p].name)}</summary><ul class="ingr">${dp.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul></details>
-  <details class="card"><summary>Vorrat für spontane Abende</summary><p class="small muted" style="margin:8px 0 0">TK-Gemüse, Express-Reis, Nudeln, passierte Tomaten, TK-Lachs und Frischkäse light immer im Haus – dann geht jedes Gericht ohne Planung.</p></details>`;
+  <details class="card"><summary>Tipps für ${esc(PEOPLE[p].name)}</summary><ul class="ingr">${dp.tips.map(x => `<li>${esc(x)}</li>`).join('')}</ul></details>`;
 }
-function openRecipe(wd){
-  const r = RECIPES[wd];
-  openSheet(`<div class="sheet-head"><div><div class="eyebrow">${WDL[wd]}</div><h2>${esc(r.name)}</h2></div><button class="icon-btn" data-act="sheetClose" aria-label="Schließen">✕</button></div>
-    <div class="row" style="gap:6px;flex-wrap:wrap"><span class="pill">⏱ ${esc(r.time)}</span><span class="pill">${esc(r.work)}</span><span class="pill">2 Personen</span></div>
-    <div class="card" style="margin-top:12px"><h3>Zutaten</h3><ul class="ingr">${r.ingr.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div>
-    <div class="card" style="margin-top:12px"><h3>So geht’s</h3><ol class="steps">${r.steps.map(s => `<li>${esc(s.t)}${s.min ? `<div><button class="btn sm" data-act="kt" data-min="${s.min}" data-label="${esc(s.l || r.name)}">⏱ Timer ${s.min} Min.</button></div>` : ''}</li>`).join('')}</ol></div>`);
+function openRecipe(id, date){
+  const r = RECIPES[id] || RECIPES.frei;
+  const hasCarb = r.ingr.some(([k]) => CARB_KEYS.includes(k));
+  const wd = date ? parseYmd(date).getDay() : null;
+  openSheet(`<div class="sheet-head"><div><div class="eyebrow">${date ? WDL[wd] + ', ' + fmtDate(date) : 'Rezept'}</div><h2>${esc(r.name)}</h2></div><button class="icon-btn" data-act="sheetClose" aria-label="Schließen">✕</button></div>
+    <div class="row" style="gap:6px;flex-wrap:wrap"><span class="pill">⏱ ${minLabel(r)}</span>${r.ingr.length ? '<span class="pill">max. 10 Min. Arbeit</span><span class="pill">2 Personen</span>' : ''}${r.tags.includes('fav') ? '<span class="pill me">Liebling</span>' : ''}</div>
+    ${r.ingr.length ? `<div class="card" style="margin-top:12px"><h3>Zutaten</h3><ul class="ingr">${r.ingr.map(([k, q]) => `<li>${esc(ingrLine(k, q))}</li>`).join('')}</ul>${hasCarb ? '<p class="tiny muted" style="margin:8px 0 0">Beilage teilen: Christoffer ca. 40 %, Ariane ca. 60 %.</p>' : ''}</div>` : ''}
+    <div class="card" style="margin-top:12px"><h3>So geht’s</h3><ol class="steps">${r.steps.map(([txt, min, l]) => `<li>${esc(txt)}${min ? `<div><button class="btn sm" data-act="kt" data-min="${min}" data-label="${esc(l || r.name)}">⏱ Timer ${min} Min.</button></div>` : ''}</li>`).join('')}</ol></div>
+    ${date ? `<button class="btn ghost block" style="margin-top:12px" data-act="swapDay" data-mon="${weekOf(date)}" data-wd="${wd}">Anderes Gericht für ${WDL[wd]}</button>` : ''}`);
+}
+
+/* Planer */
+let PLAN = null;
+function setSheet(html){ const s = $('#layer .sheet'); if (s){ s.innerHTML = '<div class="grab"></div>' + html; s.scrollTop = 0; } else openSheet(html); }
+function openPlanner(mon, pickWd){
+  PLAN = { mon, days: planOrDefault(mon), pick: null, filter: 'alle', q: '' };
+  openSheet(''); if (pickWd != null) { PLAN.pick = pickWd; PLAN.single = true; } renderPlanner();
+}
+function renderPlanner(){
+  if (PLAN.pick == null){
+    setSheet(`<div class="sheet-head"><div><div class="eyebrow">Wochenplan</div><h2>Woche ${weekLabel(PLAN.mon)}</h2></div><button class="icon-btn" data-act="sheetClose" aria-label="Schließen">✕</button></div>
+      <p class="small muted" style="margin:0 0 10px">Tag antippen und Gericht auswählen. Gespeichert gilt der Plan für euch beide.</p>
+      ${WEEK_ORDER.map(wd => { const r = RECIPES[PLAN.days[wd]] || RECIPES.frei; return `<button class="day" data-act="planPick" data-wd="${wd}"><span class="wd">${WD[wd]}</span><span class="grow"><b>${esc(r.name)}</b><span class="small muted" style="display:block">${esc([minLabel(r), mainTags(r)].filter(Boolean).join(' · '))}</span></span><span class="muted">ändern ›</span></button>`; }).join('')}
+      <div class="row" style="gap:8px;margin-top:12px"><button class="btn soft" style="flex:1" data-act="planDice">🎲 Vorschlag würfeln</button></div>
+      <button class="btn big block" style="margin-top:8px" data-act="planSave">Woche speichern</button>
+      <p class="tiny muted" style="margin:8px 0 0;text-align:center">Würfeln mischt Montag bis Samstag – Sonntag bleibt, wie er ist.</p>`);
+    return;
+  }
+  const browse = PLAN.pick === 'browse';
+  setSheet(`<div class="sheet-head"><div><div class="eyebrow">${browse ? 'Rezeptsammlung' : 'Gericht für ' + WDL[PLAN.pick]}</div><h2>${browse ? RCP.length + ' Faulenzer-Rezepte' : 'Auswählen'}</h2></div>
+      <button class="icon-btn" data-act="${browse || PLAN.single ? 'sheetClose' : 'planBack'}" aria-label="${browse || PLAN.single ? 'Schließen' : 'Zurück'}">${browse || PLAN.single ? '✕' : '‹'}</button></div>
+    <input type="text" id="planQ" placeholder="Suchen, z. B. Lachs" value="${esc(PLAN.q)}" autocomplete="off" aria-label="Rezept suchen">
+    <div class="chips">${FILTERS.map(([v, l]) => `<button class="${PLAN.filter === v ? 'on' : ''}" data-act="planFilter" data-f="${esc(v)}">${esc(l)}</button>`).join('')}</div>
+    <div id="planList"></div>`);
+  renderPlanList();
+}
+function renderPlanList(){
+  const box = $('#planList'); if (!box) return;
+  const q = PLAN.q.trim().toLowerCase(), f = PLAN.filter, browse = PLAN.pick === 'browse';
+  const used = {}; if (!browse) WEEK_ORDER.forEach(wd => { if (wd !== PLAN.pick) used[PLAN.days[wd]] = WD[wd]; });
+  const rows = RCP.map(x => RECIPES[x[0]]).filter(r => (f === 'alle' || (f === 'schnell' ? r.min && r.min <= 15 : r.tags.includes(f)))
+    && (!q || r.name.toLowerCase().includes(q) || r.ingr.some(([k]) => (ITEMS[k] ? ITEMS[k][0] : '').toLowerCase().includes(q))));
+  box.innerHTML = rows.length ? rows.map(r => `<button class="day pick ${!browse && PLAN.days[PLAN.pick] === r.id ? 'today' : ''}" data-act="${browse ? 'recipe' : 'planChoose'}" data-id="${r.id}"><span class="grow"><b>${esc(r.name)}</b><span class="small muted" style="display:block">${esc([minLabel(r), mainTags(r)].filter(Boolean).join(' · '))}${used[r.id] ? ` · <b>schon am ${used[r.id]}</b>` : ''}</span></span>${r.tags.includes('fav') ? '<span class="pill me">♥</span>' : ''}</button>`).join('')
+    : '<div class="empty">Nichts gefunden.</div>';
+}
+function diceWeek(){
+  const prev = weekPlan(addDays(PLAN.mon, -7)) || {};
+  const prevIds = new Set(Object.values(prev));
+  const pool = RCP.map(x => RECIPES[x[0]]).filter(r => r.id !== 'frei' && r.id !== 'reste');
+  const groups = ['Nudeln','Hähnchen','Pute & Rind','Fisch','Vegetarisch','Abendbrot'];
+  for (let attempt = 0; attempt < 60; attempt++){
+    const shuffled = pool.slice().sort(() => Math.random() - .5).sort((a, b) => (prevIds.has(a.id) ? 1 : 0) - (prevIds.has(b.id) ? 1 : 0));
+    const pick = [], cnt = {}; let ofen = 0;
+    for (const r of shuffled){
+      if (pick.length === 6) break;
+      if (groups.some(g => r.tags.includes(g) && (cnt[g] || 0) >= 2)) continue;
+      if (r.tags.includes('Ofen') && ofen >= 3) continue;
+      pick.push(r); groups.forEach(g => { if (r.tags.includes(g)) cnt[g] = (cnt[g] || 0) + 1; }); if (r.tags.includes('Ofen')) ofen++;
+    }
+    if (pick.length === 6 && (cnt['Fisch'] || 0) >= 1){
+      pick.sort(() => Math.random() - .5);
+      [1,2,3,4,5,6].forEach((wd, i) => { PLAN.days[wd] = pick[i].id; });
+      return;
+    }
+  }
+}
+function savePlan(){
+  put('plan|' + PLAN.mon, { mon: PLAN.mon, days: Object.assign({}, PLAN.days) });
+  const cur = weekOf(today()); ESSEN_W = PLAN.mon === cur ? 0 : 1; SHOP_W = ESSEN_W;
+  closeSheet(); render(); toast('🗓 Woche gespeichert – Einkaufsliste ist fertig', 3200);
 }
 
 /* --- Küchentimer --- */
@@ -1038,28 +1300,48 @@ function renderTimers(){
     return `<div class="kt ${t.done ? 'done' : ''}"><b>${t.done ? '⏰' : fmtClock(left)}</b><span class="l">${t.done ? 'Fertig: ' : ''}${esc(t.label)}</span>${t.done ? '' : `<button data-act="ktAdd" data-id="${t.id}">+1 Min.</button>`}<button data-act="ktStop" data-id="${t.id}">${t.done ? 'OK' : '✕'}</button></div>`; }).join('');
 }
 
-/* --- Einkauf --- */
-function shopState(id){ return !!(get('shop|' + id) || {}).c; }
+/* --- Einkauf: automatisch aus dem Wochenplan --- */
+let SHOP_W = null;
+function shopWeek(){
+  const t = today(), cur = weekOf(t), nxt = addDays(cur, 7);
+  if (SHOP_W === 0) return cur; if (SHOP_W === 1) return nxt;
+  return ([6,0].includes(parseYmd(t).getDay()) && weekPlan(nxt)) ? nxt : cur;
+}
+function shopItems(mon){
+  const days = planOrDefault(mon), agg = {};
+  const add = (k, q, use) => { if (!ITEMS[k]) return; const a = agg[k] || (agg[k] = { q: 0, uses: [] }); if (q) a.q += q; if (!a.uses.includes(use)) a.uses.push(use); };
+  WEEK_ORDER.forEach(wd => { const r = RECIPES[days[wd]]; if (r) r.ingr.forEach(([k, q]) => add(k, q, WD[wd])); });
+  BASICS.forEach(([k, q]) => add(k, q, 'Frühstück/Snacks'));
+  return Object.entries(agg).map(([k, a]) => ({ k: `shop|${mon}|${k}`, name: ITEMS[k][0], cat: ITEMS[k][1],
+    q: ITEMS[k][1] === 'Vorrat prüfen' ? 'prüfen' : fmtQty(k, a.q), uses: a.uses.join(', '), c: !!(get(`shop|${mon}|${k}`) || {}).c }));
+}
 function viewEinkauf(){
-  const custom = list('shopx|').map(r => Object.assign({ k: r.k }, r.d));
-  let total = 0, done = 0, html = '';
-  SHOP.forEach(([cat, items]) => {
-    const rows = items.map(([id, name, q]) => ({ k: 'shop|' + id, name, q, c: shopState(id) }))
-      .concat(custom.filter(c => c.cat === cat).map(c => ({ k: c.k, name: c.name, q: c.q || '', c: !!c.c, custom: true })));
-    total += rows.length; done += rows.filter(r => r.c).length;
+  const mon = shopWeek(), cur = weekOf(today()), planned = !!weekPlan(mon);
+  const items = shopItems(mon).concat(list('shopx|').map(r => ({ k: r.k, name: r.d.name, q: r.d.q || '', cat: r.d.cat === 'Eigene Artikel' || SHOP_ORDER.includes(r.d.cat) ? r.d.cat : 'Eigene Artikel', c: !!r.d.c, custom: true, uses: '' })));
+  const total = items.length, done = items.filter(i => i.c).length;
+  let html = '';
+  SHOP_ORDER.forEach(cat => {
+    const rows = items.filter(i => i.cat === cat).sort((a, b) => a.name.localeCompare(b.name, 'de'));
     const vis = HIDE_DONE ? rows.filter(r => !r.c) : rows;
     if (!vis.length) return;
-    html += `<div class="shop-cat"><h3>${esc(cat)}</h3>${vis.map(r => `<div class="item ${r.c ? 'on' : ''}" data-act="shopToggle" data-k="${esc(r.k)}" role="checkbox" aria-checked="${r.c}" tabindex="0"><span class="box"></span><span class="t">${esc(r.name)}</span><span class="q">${esc(r.q)}</span>${r.custom ? `<button class="del" data-act="shopDel" data-k="${esc(r.k)}" aria-label="Löschen">✕</button>` : ''}</div>`).join('')}</div>`;
+    html += `<div class="shop-cat"><h3>${esc(cat)}</h3>${vis.map(r => `<div class="item ${r.c ? 'on' : ''}" data-act="shopToggle" data-k="${esc(r.k)}" role="checkbox" aria-checked="${r.c}" tabindex="0"><span class="box"></span><span class="grow"><span class="t">${esc(r.name)}</span>${r.uses ? `<span class="tiny faint" style="display:block">${esc(r.uses)}</span>` : ''}</span><span class="q">${esc(r.q)}</span>${r.custom ? `<button class="del" data-act="shopDel" data-k="${esc(r.k)}" aria-label="Löschen">✕</button>` : ''}</div>`).join('')}</div>`;
   });
+  const dishes = WEEK_ORDER.map(wd => RECIPES[planOrDefault(mon)[wd]]).filter(r => r && r.ingr.length).map(r => r.name);
   return `
-  <section class="card tint"><div class="row between"><div><div class="eyebrow">Rewe · Wocheneinkauf</div><h2 class="num" style="margin-top:4px">${done} von ${total} im Wagen</h2></div><span class="pill ${done === total && total ? 'ok' : ''}">${total ? Math.round(done/total*100) : 0} %</span></div>
+  <section class="card tint">
+    <div class="row between" style="gap:8px;flex-wrap:wrap"><div class="seg"><button class="${mon === cur ? 'on' : ''}" data-act="shopW" data-w="0">Diese Woche</button><button class="${mon !== cur ? 'on' : ''}" data-act="shopW" data-w="1">Nächste Woche</button></div><span class="pill ${done === total && total ? 'ok' : ''}">${total ? Math.round(done/total*100) : 0} %</span></div>
+    <h2 class="num" style="margin-top:10px">${done} von ${total} im Wagen</h2>
+    <p class="small muted" style="margin:4px 0 0">Rewe · ${weekLabel(mon)} · ${planned ? 'aus eurem Wochenplan' : 'Standardwoche (noch nicht geplant)'}</p>
     <div class="bar"><i style="width:${total ? Math.max(2, done/total*100) : 0}%"></i></div>
-    <div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap"><button class="btn sm soft" data-act="shopHide">${HIDE_DONE ? 'Erledigte zeigen' : 'Erledigte ausblenden'}</button><button class="btn sm ghost" data-act="shopReset">Neue Woche: alle Haken weg</button></div>
-    <p class="tiny muted" style="margin:10px 0 0">Ihr seht beide dieselbe Liste – abgehakt wird live für euch beide.</p></section>
+    ${planned ? '' : `<button class="btn block" style="margin-top:12px" data-act="planOpen" data-mon="${mon}">🗓 Erst die Woche planen</button>`}
+    <div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap"><button class="btn sm soft" data-act="shopHide">${HIDE_DONE ? 'Erledigte zeigen' : 'Erledigte ausblenden'}</button><button class="btn sm ghost" data-act="shopReset" data-mon="${mon}">Alle Haken weg</button></div>
+    <details style="margin-top:10px"><summary class="small muted" style="cursor:pointer">Für ${dishes.length} Gerichte + Frühstück & Snacks</summary><p class="small muted" style="margin:6px 0 0">${dishes.map(esc).join(' · ')}</p></details>
+  </section>
   ${html || '<div class="empty">Alles erledigt 🎉</div>'}
   <section class="card"><h3>Etwas hinzufügen</h3>
-    <div class="add"><input type="text" id="shopName" placeholder="z. B. Bananen" aria-label="Artikel" enterkeyhint="done"><input type="text" id="shopQ" placeholder="Menge" aria-label="Menge" style="max-width:90px"></div>
-    <div class="add"><select id="shopCat" aria-label="Abteilung">${SHOP_CATS.map(c => `<option>${esc(c)}</option>`).join('')}</select><button class="btn" data-act="shopAdd">Hinzufügen</button></div>
+    <div class="add"><input type="text" id="shopName" placeholder="z. B. Kaffee" aria-label="Artikel" enterkeyhint="done"><input type="text" id="shopQ" placeholder="Menge" aria-label="Menge" style="max-width:90px"></div>
+    <div class="add"><select id="shopCat" aria-label="Abteilung">${SHOP_ORDER.filter(c => c !== 'Vorrat prüfen').map(c => `<option ${c === 'Eigene Artikel' ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select><button class="btn" data-act="shopAdd">Hinzufügen</button></div>
+    <p class="tiny muted" style="margin:8px 0 0">Eigene Artikel bleiben auf der Liste, bis ihr sie löscht.</p>
   </section>`;
 }
 
@@ -1186,7 +1468,7 @@ function openSettings(){
   <div class="card" style="margin-top:12px"><h3>Daten</h3>
     <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn sm soft" data-act="exportData">Sicherung herunterladen</button><label class="btn sm soft" style="cursor:pointer">Sicherung laden<input type="file" id="importFile" accept="application/json,.json" hidden></label></div>
   </div>
-  <p class="tiny faint" style="text-align:center;margin-top:14px">Fit zu zweit · Version 1.1</p>`);
+  <p class="tiny faint" style="text-align:center;margin-top:14px">Fit zu zweit · Version 1.2</p>`);
   $('#importFile').addEventListener('change', importData);
 }
 function gcalLink(){
@@ -1250,7 +1532,18 @@ const ACT = {
   sheetClose: () => closeSheet(),
   water: el => addWater(+el.dataset.d),
   startTraining: el => startWorkout(el.dataset.skip === '1'),
-  recipe: el => openRecipe(+el.dataset.wd),
+  recipe: el => openRecipe(el.dataset.id, el.dataset.date),
+  essenW: el => { ESSEN_W = +el.dataset.w; render(); },
+  shopW: el => { SHOP_W = +el.dataset.w; render(); },
+  planOpen: el => openPlanner(el.dataset.mon),
+  swapDay: el => openPlanner(el.dataset.mon, +el.dataset.wd),
+  browse: () => { PLAN = { mon: weekOf(today()), days: planOrDefault(weekOf(today())), pick: 'browse', filter: 'alle', q: '' }; openSheet(''); renderPlanner(); },
+  planPick: el => { PLAN.pick = +el.dataset.wd; PLAN.q = ''; renderPlanner(); },
+  planBack: () => { PLAN.pick = null; renderPlanner(); },
+  planFilter: el => { PLAN.filter = el.dataset.f; document.querySelectorAll('.chips button').forEach(b => b.classList.toggle('on', b.dataset.f === PLAN.filter)); renderPlanList(); },
+  planChoose: el => { PLAN.days[PLAN.pick] = el.dataset.id; if (PLAN.single){ savePlan(); return; } PLAN.pick = null; renderPlanner(); },
+  planDice: () => { diceWeek(); renderPlanner(); vibrate(20); },
+  planSave: () => savePlan(),
   kt: el => ktStart(+el.dataset.min, el.dataset.label),
   ktStop: el => { KT = KT.filter(t => t.id !== el.dataset.id); ktSave(); renderTimers(); ktLoop(); },
   ktAdd: el => { const t = KT.find(x => x.id === el.dataset.id); if (t){ t.endAt += 60000; ktSave(); renderTimers(); } },
@@ -1258,8 +1551,8 @@ const ACT = {
   shopDel: async el => { const k = el.dataset.k; put(k, get(k) || {}, true); render(); },
   shopAdd: () => { const n = $('#shopName').value.trim(); if (!n) return $('#shopName').focus(); put('shopx|' + uid(), { name: n, q: $('#shopQ').value.trim(), cat: $('#shopCat').value, c: false }); render(); toast('Hinzugefügt: ' + n); },
   shopHide: () => { HIDE_DONE = !HIDE_DONE; LS.set('fz_hidedone', HIDE_DONE); render(); },
-  shopReset: async () => { const ok = await ask('Neue Einkaufswoche?', 'Alle Haken werden entfernt – für euch beide. Eigene Artikel bleiben auf der Liste.', [{ label:'Ja, Haken entfernen', value:true }, { label:'Abbrechen', value:false, cls:'ghost' }]); if (!ok) return;
-    SHOP.forEach(([, items]) => items.forEach(([id]) => { if (shopState(id)) put('shop|' + id, { c:false }); }));
+  shopReset: async () => { const ok = await ask('Neue Einkaufswoche?', 'Alle Haken dieser Liste werden entfernt – für euch beide. Eigene Artikel bleiben auf der Liste.', [{ label:'Ja, Haken entfernen', value:true }, { label:'Abbrechen', value:false, cls:'ghost' }]); if (!ok) return;
+    const mon = shopWeek(); shopItems(mon).forEach(i => { if (i.c) put(i.k, { c:false }); });
     list('shopx|').forEach(r => { if (r.d.c) put(r.k, Object.assign({}, r.d, { c:false })); }); render(); toast('Liste ist bereit für die neue Woche'); },
   progP: el => { PROG_P = el.dataset.p; render(); },
   chartM: el => { CHART_M = el.dataset.m; render(); },
@@ -1309,6 +1602,9 @@ document.addEventListener('keydown', e => {
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.item[data-act]')){ e.preventDefault(); ACT.shopToggle(e.target, e); }
   if (e.key === 'Enter' && e.target.id === 'shopName') ACT.shopAdd();
   if (e.key === 'Enter' && e.target.id === 'stepsIn') ACT.stepsSave();
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'planQ' && PLAN){ PLAN.q = e.target.value; renderPlanList(); }
 });
 document.addEventListener('change', e => {
   const k = e.target.dataset && e.target.dataset.loc;
