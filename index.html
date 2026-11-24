@@ -1384,10 +1384,22 @@ const diaryDate = () => DIARY_D || today();
 function goalKcal(p, date){ return PEOPLE[p].kcal + (p === 'A' && biked(date) ? 200 : 0); }
 function foodEntries(p, date){ return list(`food|${p}|${date}|`).map(r => Object.assign({ k: r.k }, r.d)).sort((a, b) => (a.ts || 0) - (b.ts || 0)); }
 function dayTotals(p, date){ const e = foodEntries(p, date); return { kcal: e.reduce((s, x) => s + (x.kcal || 0), 0), prot: e.reduce((s, x) => s + (x.prot || 0), 0), n: e.length }; }
-const myFoods = () => list('myfood|').map(r => Object.assign({ id: r.k, own: true }, r.d));
+const PORTION_TYPES = [
+  ['Scheibe Toast',28,'g','Scheiben'],['Scheibe Brot',45,'g','Scheiben'],['Brötchen',60,'g','Brötchen'],['Knäckebrot',10,'g','Scheiben'],
+  ['Scheibe Käse/Wurst',20,'g','Scheiben'],['Stück Kuchen',80,'g','Stück'],['Keks',12,'g','Kekse'],['Riegel',40,'g','Riegel'],
+  ['Becher Joghurt',150,'g','Becher'],['Esslöffel',15,'g','EL'],['Teelöffel',5,'g','TL'],['Handvoll',25,'g','Handvoll'],
+  ['Stück Obst',130,'g','Stück'],['Portion',150,'g','Portionen'],['Teller',350,'g','Teller'],['Tasse',200,'ml','Tassen'],
+  ['Glas',200,'ml','Gläser'],['Dose',330,'ml','Dosen'],['Flasche (0,5 l)',500,'ml','Flaschen'],['Packung',100,'g','Packungen']
+];
+const myFoods = () => list('myfood|').map(r => Object.assign({ id: r.k, own: true, unit: 'g' }, r.d));
+const perLabel = f => f.k100 == null ? f.por : `${f.own ? '1 ' : ''}${f.por} (${fmtNum(f.g, 0)} ${f.unit})`;
+function amtLabel(f, mult){
+  if (f.plural) return `${fmtNum(mult)} ${mult === 1 ? f.por : f.plural}`;
+  return mult === 1 ? f.por : `${fmtNum(mult)} × ${f.por}`;
+}
 function foodById(id){ return FOODS.find(f => f.id === id) || myFoods().find(f => f.id === id) || null; }
 function foodPortion(f, mult){
-  if (f.own) return { kcal: Math.round(f.kcal * mult), prot: Math.round((f.prot || 0) * mult) };
+  if (f.k100 == null) return { kcal: Math.round((f.kcal || 0) * mult), prot: Math.round((f.prot || 0) * mult) };
   const g = f.g * mult; return { kcal: Math.round(f.k100 * g / 100), prot: Math.round(f.p100 * g / 100 * 10) / 10 };
 }
 function recentFoods(p){
@@ -1426,22 +1438,28 @@ function openFoodAdd(slot){
 function renderFoodSheet(){
   if (FOOD.sel === 'new'){
     setSheet(`<div class="sheet-head"><h2>Eigenes Lebensmittel</h2><button class="icon-btn" data-act="foodBack" aria-label="Zurück">‹</button></div>
-      <label class="field"><span>Name</span><input type="text" id="mfName" placeholder="z. B. Proteinbrot vom Bäcker" autocomplete="off"></label>
-      <label class="field"><span>Portion</span><input type="text" id="mfPor" placeholder="z. B. 1 Scheibe" autocomplete="off"></label>
-      <div class="grid2"><label class="field"><span>kcal pro Portion</span><input type="text" id="mfK" inputmode="numeric" autocomplete="off"></label>
-      <label class="field"><span>Eiweiß g (optional)</span><input type="text" id="mfP" inputmode="decimal" autocomplete="off"></label></div>
-      <p class="tiny muted">Die Werte stehen auf der Packung. Eigene Lebensmittel seht ihr beide.</p>
+      <label class="field"><span>Name</span><input type="text" id="mfName" placeholder="z. B. Vollkorntoast (Marke)" autocomplete="off"></label>
+      <p class="small muted" style="margin:12px 0 0"><b>Nährwerte von der Packung – pro 100 g bzw. 100 ml</b></p>
+      <div class="grid2"><label class="field"><span id="mfKl">kcal pro 100 g</span><input type="text" id="mfK" inputmode="decimal" placeholder="z. B. 250" autocomplete="off"></label>
+      <label class="field"><span id="mfPl">Eiweiß g pro 100 g</span><input type="text" id="mfP" inputmode="decimal" placeholder="z. B. 9" autocomplete="off"></label></div>
+      <label class="field"><span>Was ist eine Portion?</span><select id="mfType">${PORTION_TYPES.map((t, i) => `<option value="${i}" ${i === 0 ? 'selected' : ''}>${esc(t[0])} – ca. ${t[1]} ${t[2]}</option>`).join('')}</select></label>
+      <label class="field"><span id="mfGl">Gewicht einer Portion (g) – Vorschlag, gern anpassen</span><input type="text" id="mfG" inputmode="decimal" value="${PORTION_TYPES[0][1]}" autocomplete="off"></label>
+      <div class="card" style="margin-top:12px;text-align:center"><b class="num" id="mfOut">–</b><div class="tiny muted">pro Portion</div></div>
+      <p class="tiny muted">Kein Wiegen nötig – das Gewicht ist ein typischer Wert. Steht auf der Packung ein Gewicht pro Scheibe, nimm das. Eigene Lebensmittel seht ihr beide.</p>
       <button class="btn big block" style="margin-top:8px" data-act="foodNewSave">Speichern & eintragen</button>`);
     return;
   }
   if (FOOD.sel){
     const f = foodById(FOOD.sel); if (!f){ FOOD.sel = null; return renderFoodSheet(); }
-    const n = foodPortion(f, FOOD.mult);
+    const canG = f.k100 != null, gMode = canG && FOOD.mode === 'g';
+    const c = foodCalc(); const n = foodPortion(f, c ? c.mult : FOOD.mult);
     setSheet(`<div class="sheet-head"><div><div class="eyebrow">${esc(FOOD.slot)}</div><h2>${esc(f.name)}</h2></div><button class="icon-btn" data-act="foodBack" aria-label="Zurück">‹</button></div>
-      <p class="muted small" style="margin:0">1 Portion = ${esc(f.own ? f.por : `${f.por} (${f.g} ${f.unit})`)} · ${fmtNum(foodPortion(f, 1).kcal, 0)} kcal</p>
-      <div class="stepper"><button class="round" data-act="foodMult" data-d="-0.5" aria-label="Weniger">−</button><div><b class="num" style="font-size:2.2rem">${fmtNum(FOOD.mult)}</b><div class="small muted">Portion${FOOD.mult === 1 ? '' : 'en'}</div></div><button class="round" data-act="foodMult" data-d="0.5" aria-label="Mehr">+</button></div>
-      ${f.own ? '' : `<label class="field"><span>…oder genau in ${f.unit}</span><input type="text" id="foodG" inputmode="numeric" placeholder="${Math.round(f.g * FOOD.mult)}" autocomplete="off"></label>`}
-      <div class="card" style="margin-top:12px;text-align:center"><b class="num" style="font-size:1.6rem" id="foodK">${fmtNum(n.kcal, 0)} kcal</b><div class="small muted" id="foodP">${fmtNum(n.prot, 0)} g Eiweiß</div></div>
+      <p class="muted small" style="margin:0">${esc(perLabel(f))} = ${fmtNum(foodPortion(f, 1).kcal, 0)} kcal</p>
+      ${canG ? `<div class="seg" style="width:100%;display:flex;margin-top:12px"><button style="flex:1" class="${!gMode ? 'on' : ''}" data-act="foodMode" data-m="por">${esc(f.plural || 'Portionen')}</button><button style="flex:1" class="${gMode ? 'on' : ''}" data-act="foodMode" data-m="g">${f.unit === 'ml' ? 'Milliliter' : 'Gramm'}</button></div>` : ''}
+      ${gMode ? `<label class="field"><span>Menge in ${f.unit}</span><input type="text" id="foodG" inputmode="decimal" value="${FOOD.grams || ''}" placeholder="${Math.round(f.g)}" autocomplete="off"></label>`
+        : `<div class="stepper"><button class="round" data-act="foodMult" data-d="-0.5" aria-label="Weniger">−</button><div><b class="num" style="font-size:2.2rem">${fmtNum(FOOD.mult)}</b><div class="small muted">${esc(FOOD.mult === 1 ? (f.plural ? f.por : 'Portion') : (f.plural || 'Portionen'))}</div></div><button class="round" data-act="foodMult" data-d="0.5" aria-label="Mehr">+</button></div>
+           <div class="chips" style="justify-content:center">${[0.5,1,2,3].map(m => `<button class="${FOOD.mult === m ? 'on' : ''}" data-act="foodMultSet" data-m="${m}">${fmtNum(m)}</button>`).join('')}</div>`}
+      <div class="card" style="margin-top:12px;text-align:center"><b class="num" style="font-size:1.6rem" id="foodK">${fmtNum(n.kcal, 0)} kcal</b><div class="small muted" id="foodP">${fmtNum(n.prot, 0)} g Eiweiß${canG && !gMode ? ` · ca. ${fmtNum(f.g * FOOD.mult, 0)} ${f.unit}` : ''}</div></div>
       <button class="btn big block" style="margin-top:12px" data-act="foodSave">Eintragen</button>`);
     return;
   }
@@ -1458,14 +1476,24 @@ function renderFoodList(){
   const q = FOOD.q.trim().toLowerCase(); const all = FOODS.concat(myFoods());
   const rows = q ? all.filter(f => f.name.toLowerCase().includes(q))
     : FOOD.cat === 'Zuletzt' ? recentFoods(me()) : FOOD.cat === 'Eigene' ? myFoods() : FOODS.filter(f => f.cat === FOOD.cat);
-  box.innerHTML = rows.length ? rows.map(f => `<button class="day pick" data-act="foodPick" data-id="${esc(f.id)}"><span class="grow"><b>${esc(f.name)}</b><span class="small muted" style="display:block">${esc(f.por)} · ${fmtNum(foodPortion(f, 1).kcal, 0)} kcal${f.own ? ' · eigenes' : ''}</span></span><span class="muted">+</span></button>`).join('')
+  box.innerHTML = rows.length ? rows.map(f => `<button class="day pick" data-act="foodPick" data-id="${esc(f.id)}"><span class="grow"><b>${esc(f.name)}</b><span class="small muted" style="display:block">${esc(perLabel(f))} · ${fmtNum(foodPortion(f, 1).kcal, 0)} kcal${f.own ? ' · eigenes' : ''}</span></span><span class="muted">+</span></button>`).join('')
     : `<div class="empty">${FOOD.cat === 'Zuletzt' && !q ? 'Noch nichts eingetragen.' : FOOD.cat === 'Eigene' && !q ? 'Noch keine eigenen Lebensmittel.' : 'Nichts gefunden – leg es unten selbst an.'}</div>`;
 }
 function foodCalc(){
   const f = foodById(FOOD.sel); if (!f) return null;
-  const gIn = $('#foodG') ? parseFloat(String($('#foodG').value).replace(',', '.')) : NaN;
-  if (!f.own && gIn > 0) return { f, mult: gIn / f.g, amt: `${Math.round(gIn)} ${f.unit}` };
-  return { f, mult: FOOD.mult, amt: f.own ? `${fmtNum(FOOD.mult)} × ${f.por}` : `${fmtNum(FOOD.mult)} × ${f.por}` };
+  if (f.k100 != null && FOOD.mode === 'g'){
+    const gIn = parseFloat(String(FOOD.grams || '').replace(',', '.'));
+    if (gIn > 0) return { f, mult: gIn / f.g, amt: `${fmtNum(gIn, 0)} ${f.unit}` };
+    return { f, mult: 0, amt: '' };
+  }
+  return { f, mult: FOOD.mult, amt: amtLabel(f, FOOD.mult) };
+}
+function mfPreview(){
+  const t = PORTION_TYPES[+$('#mfType').value] || PORTION_TYPES[0];
+  const k = parseFloat(String($('#mfK').value).replace(',', '.')), pr = parseFloat(String($('#mfP').value).replace(',', '.')) || 0, g = parseFloat(String($('#mfG').value).replace(',', '.'));
+  ['mfKl','mfPl'].forEach((id, i) => { $('#' + id).textContent = (i ? 'Eiweiß g pro 100 ' : 'kcal pro 100 ') + t[2]; });
+  $('#mfGl').textContent = `Gewicht einer Portion (${t[2]}) – Vorschlag, gern anpassen`;
+  $('#mfOut').textContent = k >= 0 && g > 0 ? `1 ${t[0]} (${fmtNum(g, 0)} ${t[2]}) ≈ ${fmtNum(Math.round(k * g / 100), 0)} kcal · ${fmtNum(pr * g / 100, 1)} g Eiweiß` : '–';
 }
 function addFood(entry){
   const p = me(), d = diaryDate(), ts = Date.now();
@@ -1700,7 +1728,7 @@ function openSettings(){
   <div class="card" style="margin-top:12px"><h3>Daten</h3>
     <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn sm soft" data-act="exportData">Sicherung herunterladen</button><label class="btn sm soft" style="cursor:pointer">Sicherung laden<input type="file" id="importFile" accept="application/json,.json" hidden></label></div>
   </div>
-  <p class="tiny faint" style="text-align:center;margin-top:14px">Fit zu zweit · Version 1.3</p>`);
+  <p class="tiny faint" style="text-align:center;margin-top:14px">Fit zu zweit · Version 1.4</p>`);
   $('#importFile').addEventListener('change', importData);
 }
 function gcalLink(){
@@ -1787,16 +1815,19 @@ const ACT = {
   foodDel: el => { put(el.dataset.k, get(el.dataset.k) || {}, true); render(); },
   foodSlot: el => { FOOD.slot = el.dataset.s; document.querySelectorAll('.sheet .seg button').forEach(b => b.classList.toggle('on', b.dataset.s === FOOD.slot)); },
   foodCat: el => { FOOD.cat = el.dataset.c; FOOD.q = ''; const qi = $('#foodQ'); if (qi) qi.value = ''; document.querySelectorAll('.sheet .chips button').forEach(b => b.classList.toggle('on', b.dataset.c === FOOD.cat)); renderFoodList(); },
-  foodPick: el => { FOOD.sel = el.dataset.id; FOOD.mult = 1; renderFoodSheet(); },
+  foodPick: el => { FOOD.sel = el.dataset.id; FOOD.mult = 1; FOOD.mode = 'por'; FOOD.grams = ''; renderFoodSheet(); },
+  foodMode: el => { FOOD.mode = el.dataset.m; renderFoodSheet(); const g = $('#foodG'); if (g) g.focus(); },
+  foodMultSet: el => { FOOD.mult = +el.dataset.m; renderFoodSheet(); },
   foodBack: () => { FOOD.sel = null; renderFoodSheet(); },
   foodMult: el => { FOOD.mult = clamp(Math.round((FOOD.mult + +el.dataset.d) * 2) / 2, 0.5, 20); renderFoodSheet(); },
-  foodSave: () => { const c = foodCalc(); if (!c) return; const n = foodPortion(c.f, c.mult);
+  foodSave: () => { const c = foodCalc(); if (!c) return; if (!(c.mult > 0)) return toast('Bitte eine Menge eingeben'); const n = foodPortion(c.f, c.mult);
     addFood({ slot: FOOD.slot, name: c.f.name, amt: c.amt, kcal: n.kcal, prot: n.prot, fid: c.f.id }); closeSheet(); render(); toast(`✓ ${c.f.name} · ${n.kcal} kcal`); setTimeout(checkBadges, 300); },
   foodNew: () => { FOOD.sel = 'new'; renderFoodSheet(); },
-  foodNewSave: () => { const name = $('#mfName').value.trim(); const kcal = parseFloat(String($('#mfK').value).replace(',', '.')); const prot = parseFloat(String($('#mfP').value).replace(',', '.')) || 0;
-    if (!name || !(kcal >= 0)) return toast('Bitte Name und kcal eintragen');
-    const id = 'myfood|' + uid(); put(id, { name, por: $('#mfPor').value.trim() || '1 Portion', kcal: Math.round(kcal), prot, cat: 'Eigene' });
-    FOOD.sel = id; FOOD.mult = 1; renderFoodSheet(); toast('Gespeichert – jetzt Menge wählen'); },
+  foodNewSave: () => { const name = $('#mfName').value.trim(); const t = PORTION_TYPES[+$('#mfType').value] || PORTION_TYPES[0];
+    const k100 = parseFloat(String($('#mfK').value).replace(',', '.')); const p100 = parseFloat(String($('#mfP').value).replace(',', '.')) || 0; const g = parseFloat(String($('#mfG').value).replace(',', '.'));
+    if (!name) return toast('Bitte einen Namen eintragen'); if (!(k100 >= 0)) return toast('Bitte kcal pro 100 eintragen'); if (!(g > 0)) return toast('Bitte das Gewicht einer Portion eintragen');
+    const id = 'myfood|' + uid(); put(id, { name, k100, p100, g, unit: t[2], por: t[0], plural: t[3], cat: 'Eigene' });
+    FOOD.sel = id; FOOD.mult = 1; FOOD.mode = 'por'; FOOD.grams = ''; renderFoodSheet(); toast('Gespeichert – jetzt Menge wählen'); },
   shopShare: () => openShopExport(),
   shopExport: el => { const mon = shopWeek(); const wd = el.dataset.wd === '' ? null : +el.dataset.wd; shareText('Einkaufsliste', shopText(mon, wd)); },
   shopDownload: () => { const mon = shopWeek(); download(`einkaufsliste-${mon}.txt`, shopText(mon, null), 'text/plain'); },
@@ -1862,12 +1893,14 @@ document.addEventListener('keydown', e => {
 document.addEventListener('input', e => {
   if (e.target.id === 'planQ' && PLAN){ PLAN.q = e.target.value; renderPlanList(); }
   if (e.target.id === 'foodQ' && FOOD){ FOOD.q = e.target.value; renderFoodList(); }
-  if (e.target.id === 'foodG' && FOOD){ const c = foodCalc(); if (c){ const n = foodPortion(c.f, c.mult); $('#foodK').textContent = fmtNum(n.kcal, 0) + ' kcal'; $('#foodP').textContent = fmtNum(n.prot, 0) + ' g Eiweiß'; } }
+  if (e.target.id === 'foodG' && FOOD){ FOOD.grams = e.target.value; const c = foodCalc(); if (c){ const n = foodPortion(c.f, c.mult); $('#foodK').textContent = fmtNum(n.kcal, 0) + ' kcal'; $('#foodP').textContent = fmtNum(n.prot, 0) + ' g Eiweiß'; } }
+  if (['mfK','mfP','mfG'].includes(e.target.id)) mfPreview();
 });
 document.addEventListener('change', e => {
   const k = e.target.dataset && e.target.dataset.loc;
   if (k){ LOC[k] = e.target.checked; saveLoc(); render(); }
   if (['setTime','setStart','setSets','setBike'].includes(e.target.id)) ACT.saveGoals();
+  if (e.target.id === 'mfType'){ const t = PORTION_TYPES[+e.target.value]; $('#mfG').value = t[1]; mfPreview(); }
 });
 
 /* =========================================================
