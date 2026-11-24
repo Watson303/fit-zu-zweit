@@ -1,5 +1,5 @@
 // Fit zu zweit – Service Worker (offline nutzbar)
-const CACHE = 'fit-zu-zweit-v6';
+const CACHE = 'fit-zu-zweit-v7';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
