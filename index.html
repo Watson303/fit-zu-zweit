@@ -171,6 +171,13 @@ details.card[open]>summary::after{transform:rotate(-135deg)}
 .chips button{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 13px;font-weight:650;font-size:.86rem;color:var(--muted)}
 .chips button.on{background:var(--me);border-color:var(--me);color:#fff}
 .day.pick{min-height:60px}
+.ampel{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.ampel button{border:2px solid color-mix(in srgb,var(--rc) 35%,var(--line));background:var(--card);border-radius:14px;padding:8px 2px;font-size:.74rem;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--ink)}
+.ampel button span{font-size:1.4rem;line-height:1.1}
+.ampel button.on{background:var(--rc);border-color:var(--rc);color:#fff}
+.rdot{width:22px;height:22px;border-radius:50%;color:#fff;font-size:.68rem;font-weight:800;display:inline-grid;place-items:center;flex:none;margin-left:-4px;border:2px solid var(--card)}
+.stepper{display:flex;align-items:center;justify-content:center;gap:24px;margin:16px 0 4px;text-align:center}
+.del-x{border:0;background:transparent;color:var(--faint);font-size:1rem;padding:6px 4px 6px 10px}
 
 /* Formulare */
 .field{display:block;margin-top:12px}
@@ -632,6 +639,79 @@ const WEEK_ORDER = [1,2,3,4,5,6,0];
 const FILTERS = [['alle','Alle'],['fav','Lieblinge'],['Nudeln','Nudeln'],['Hähnchen','Hähnchen'],['Pute & Rind','Pute & Rind'],['Fisch','Fisch'],['Vegetarisch','Vegetarisch'],['Abendbrot','Abendbrot'],['Ofen','Ofen'],['schnell','≤ 15 Min.'],['Suppe','Suppe']];
 const CARB_KEYS = ['nudeln','spaghetti','reis','couscous','kart','suesskart','gnocchi','tortellini','spalten','wraps','toast','brot'];
 
+/* Kalorien der Rezept-Zutaten: [kcal, Eiweiß g] pro 100 g/ml bzw. pro Einheit (Stk, Beutel, Dose, Scheiben); Vorrat pauschal pro Rezept */
+const KCAL = {
+  nudeln:[350,13], spaghetti:[350,13], reis:[400,8], couscous:[360,12], hafer:[370,13], passiert:[30,1.5], tomdose:[25,1.2], kokos:[100,1],
+  thunfisch:[140,30], pesto:[450,5], nuesse:[620,20], wraps:[180,5], toast:[70,3], brot:[400,14], kart:[75,2], suesskart:[85,1.6], kuerbis:[30,1],
+  kirschtom:[20,1], gurke:[30,1.5], salat:[20,1.5], champ:[20,3], zitrone:[10,0], haehnchen:[105,23], putenbrust:[105,24], putenhack:[150,20],
+  rinderhack:[130,21], steak:[120,22], putenauf:[100,20], wuerstchen:[120,6], lachs:[200,20], seelachs:[80,18], garnelen:[70,16], spinat:[20,2.5],
+  zucchini:[25,1.5], moehren:[35,0.8], paprika:[30,1], ofengem:[40,1.5], spalten:[140,2.5], eier:[80,7], joghurt:[50,4], kraeuterq:[90,10],
+  frischk:[120,8], feta:[200,20], mozza:[200,23], reibek:[280,30], parmesan:[400,35], sahne:[170,3], gnocchi:[150,4], tortellini:[250,10], huette:[100,12],
+  oel:[120,0], honig:[30,0]
+};
+const PER_UNIT = ['reis','thunfisch','wraps','toast','brot','gurke','salat','zitrone','wuerstchen','eier','mozza'];
+const SHARE = { C: .45, A: .55 };
+function recipeNutr(r){
+  let k = 0, pr = 0;
+  r.ingr.forEach(([key, q]) => { const v = KCAL[key]; if (!v) return;
+    const f = q == null ? 1 : PER_UNIT.includes(key) ? q : q / 100; k += v[0] * f; pr += v[1] * f; });
+  return { kcal: Math.round(k), prot: Math.round(pr) };
+}
+const personNutr = (r, p) => { const n = recipeNutr(r); return { kcal: Math.round(n.kcal * SHARE[p] / 10) * 10, prot: Math.round(n.prot * SHARE[p]) }; };
+
+/* Lebensmittel: [Name, kcal/100, Eiweiß/100, Portion g/ml, Portion, Kategorie] */
+const FOODS_RAW = [
+ ['Vollkornbrot',220,7,50,'1 Scheibe','Brot & Frühstück'],['Brötchen (Weizen)',260,9,55,'1 Brötchen','Brot & Frühstück'],['Vollkornbrötchen',240,9,60,'1 Brötchen','Brot & Frühstück'],
+ ['Vollkorn-Toast',250,9,28,'1 Scheibe','Brot & Frühstück'],['Knäckebrot',340,10,10,'1 Scheibe','Brot & Frühstück'],['Haferflocken',370,13,40,'4 EL','Brot & Frühstück'],
+ ['Müsli ohne Zucker',360,10,50,'1 Portion','Brot & Frühstück'],['Cornflakes',380,7,30,'1 Portion','Brot & Frühstück'],['Croissant',410,8,60,'1 Stück','Brot & Frühstück'],
+ ['Butter',740,0.7,10,'für 1 Brot','Brot & Frühstück'],['Halbfettmargarine',360,0,10,'für 1 Brot','Brot & Frühstück'],['Marmelade',250,0.3,20,'1 EL','Brot & Frühstück'],
+ ['Honig',320,0.4,20,'1 EL','Brot & Frühstück'],['Nuss-Nougat-Creme',540,6,20,'1 EL','Brot & Frühstück'],['Nussmus/Erdnussbutter',620,25,15,'1 EL','Brot & Frühstück'],
+ ['Gouda',360,25,30,'1 Scheibe','Brot & Frühstück'],['Käse light (30 %)',270,30,30,'1 Scheibe','Brot & Frühstück'],['Frischkäse light',120,8,30,'1 Portion','Brot & Frühstück'],
+ ['Salami',380,20,30,'3 Scheiben','Brot & Frühstück'],['Kochschinken',110,19,30,'2 Scheiben','Brot & Frühstück'],['Putenaufschnitt',100,20,30,'2 Scheiben','Brot & Frühstück'],
+ ['Leberwurst',300,13,25,'1 Portion','Brot & Frühstück'],
+ ['Ei (gekocht)',140,12.5,60,'1 Ei','Milch & Ei'],['Rührei (2 Eier)',180,12,130,'1 Portion','Milch & Ei'],['Skyr natur',63,11,150,'1 Schale','Milch & Ei'],
+ ['Magerquark',67,12,125,'½ Becher','Milch & Ei'],['Hüttenkäse',100,12,100,'½ Becher','Milch & Ei'],['Joghurt natur 1,5 %',50,4,150,'1 Schale','Milch & Ei'],
+ ['Fruchtjoghurt',95,3.5,150,'1 Becher','Milch & Ei'],['Milch 1,5 %',47,3.4,200,'1 Glas','Milch & Ei'],['Mozzarella light',160,18,60,'½ Kugel','Milch & Ei'],
+ ['Feta',260,17,50,'1 Portion','Milch & Ei'],['Parmesan',400,35,10,'1 EL','Milch & Ei'],['Proteinpudding',75,10,200,'1 Becher','Milch & Ei'],
+ ['Apfel',54,0.3,150,'1 Apfel','Obst'],['Banane',95,1.2,120,'1 Banane','Obst'],['Birne',55,0.4,160,'1 Birne','Obst'],['Orange',47,1,150,'1 Orange','Obst'],
+ ['Mandarine',50,0.7,70,'1 Mandarine','Obst'],['Weintrauben',70,0.7,125,'1 Handvoll','Obst'],['Beeren',40,1,125,'1 Schale','Obst'],['Kiwi',60,1,75,'1 Kiwi','Obst'],
+ ['Erdbeeren',32,0.8,150,'1 Schale','Obst'],
+ ['Gurke',15,0.6,150,'½ Gurke','Gemüse & Salat'],['Tomate',18,1,80,'1 Tomate','Gemüse & Salat'],['Paprika',30,1,150,'1 Paprika','Gemüse & Salat'],
+ ['Möhre',35,0.9,80,'1 Möhre','Gemüse & Salat'],['Blattsalat ohne Dressing',15,1.2,80,'1 Schale','Gemüse & Salat'],['Salatdressing (Öl)',450,0,15,'1 EL','Gemüse & Salat'],
+ ['Joghurt-Dressing',90,3,30,'2 EL','Gemüse & Salat'],['Gemüse gedünstet',35,2,200,'1 Portion','Gemüse & Salat'],
+ ['Hähnchenbrust gebraten',120,26,150,'1 Filet','Fleisch & Fisch'],['Putenschnitzel',115,25,150,'1 Schnitzel','Fleisch & Fisch'],['Rindersteak',150,25,180,'1 Steak','Fleisch & Fisch'],
+ ['Schnitzel paniert',230,17,180,'1 Schnitzel','Fleisch & Fisch'],['Frikadelle',260,15,100,'1 Stück','Fleisch & Fisch'],['Bratwurst',300,13,120,'1 Wurst','Fleisch & Fisch'],
+ ['Geflügel-Wiener',200,13,50,'1 Würstchen','Fleisch & Fisch'],['Lachsfilet',200,20,125,'1 Filet','Fleisch & Fisch'],['Seelachs/Kabeljau',80,18,150,'1 Filet','Fleisch & Fisch'],
+ ['Fischstäbchen',200,12,30,'1 Stück','Fleisch & Fisch'],['Thunfisch (Dose)',110,25,130,'1 Dose','Fleisch & Fisch'],['Garnelen',70,16,100,'1 Portion','Fleisch & Fisch'],
+ ['Nudeln gekocht',150,5.5,200,'1 Teller','Beilagen'],['Vollkornnudeln gekocht',140,6,200,'1 Teller','Beilagen'],['Reis gekocht',130,2.7,180,'1 Portion','Beilagen'],
+ ['Kartoffeln gekocht',72,2,200,'3 Kartoffeln','Beilagen'],['Bratkartoffeln',150,2.5,200,'1 Portion','Beilagen'],['Pommes',290,3.5,150,'1 Portion','Beilagen'],
+ ['Kartoffelpüree',90,2,200,'1 Portion','Beilagen'],['Gnocchi',150,4,200,'1 Portion','Beilagen'],['Couscous gekocht',115,4,150,'1 Portion','Beilagen'],
+ ['Spaghetti Bolognese',140,7,400,'1 Teller','Kantine & Gerichte'],['Lasagne',150,8,350,'1 Portion','Kantine & Gerichte'],['Currywurst mit Pommes',230,7,400,'1 Portion','Kantine & Gerichte'],
+ ['Schnitzel mit Pommes',230,11,450,'1 Teller','Kantine & Gerichte'],['Gulasch mit Nudeln',140,9,450,'1 Teller','Kantine & Gerichte'],['Hähnchen-Curry mit Reis',140,9,450,'1 Teller','Kantine & Gerichte'],
+ ['Gemüsepfanne mit Reis',110,3,400,'1 Teller','Kantine & Gerichte'],['Eintopf',90,5,400,'1 Teller','Kantine & Gerichte'],['Kartoffelsuppe',75,2.5,350,'1 Teller','Kantine & Gerichte'],
+ ['Salat mit Hähnchen',90,9,350,'1 Schale','Kantine & Gerichte'],['Käsespätzle',210,8,350,'1 Portion','Kantine & Gerichte'],['Fisch mit Kartoffeln',110,9,400,'1 Teller','Kantine & Gerichte'],
+ ['Belegtes Brötchen',260,11,100,'1 Stück','Kantine & Gerichte'],['Pizza',250,10,350,'1 Pizza','Kantine & Gerichte'],['Döner',215,12,400,'1 Döner','Kantine & Gerichte'],
+ ['Burger',250,13,220,'1 Burger','Kantine & Gerichte'],['Sushi',150,6,240,'8 Stück','Kantine & Gerichte'],
+ ['Nüsse',620,20,25,'1 Handvoll','Snacks & Süßes'],['Vollmilchschokolade',540,7,25,'¼ Tafel','Snacks & Süßes'],['Zartbitterschokolade',550,8,20,'2 Riegel','Snacks & Süßes'],
+ ['Gummibärchen',340,7,25,'1 Handvoll','Snacks & Süßes'],['Kekse',480,6,25,'2 Stück','Snacks & Süßes'],['Rührkuchen',400,6,80,'1 Stück','Snacks & Süßes'],
+ ['Obstkuchen',220,3.5,120,'1 Stück','Snacks & Süßes'],['Chips',540,6,30,'1 Handvoll','Snacks & Süßes'],['Eis',200,3.5,60,'1 Kugel','Snacks & Süßes'],
+ ['Proteinriegel',360,33,45,'1 Riegel','Snacks & Süßes'],['Müsliriegel',400,6,25,'1 Riegel','Snacks & Süßes'],['Reiswaffel',380,8,8,'1 Waffel','Snacks & Süßes'],
+ ['Kaffee schwarz',2,0.2,200,'1 Tasse','Getränke'],['Kaffee mit Milch',20,1,250,'1 Tasse','Getränke'],['Cappuccino',40,2,200,'1 Tasse','Getränke'],
+ ['Latte Macchiato',55,3,300,'1 Glas','Getränke'],['Tee',1,0,250,'1 Tasse','Getränke'],['Cola',42,0,330,'1 Dose','Getränke'],['Cola Zero',0.3,0,330,'1 Dose','Getränke'],
+ ['Orangensaft',45,0.7,200,'1 Glas','Getränke'],['Saftschorle',22,0.3,400,'1 großes Glas','Getränke'],['Bier',43,0.5,500,'1 Flasche (0,5 l)','Getränke'],
+ ['Alkoholfreies Bier',25,0.3,500,'1 Flasche (0,5 l)','Getränke'],['Wein',85,0,200,'1 Glas','Getränke'],['Energydrink',45,0,250,'1 Dose','Getränke']
+];
+const FOODS = FOODS_RAW.map(([n, k, pr, g, por, cat]) => ({ id: 'f:' + n, name: n, k100: k, p100: pr, g, por, cat, unit: cat === 'Getränke' || /^Milch/.test(n) ? 'ml' : 'g' }));
+const FOOD_CATS = ['Zuletzt','Eigene','Brot & Frühstück','Milch & Ei','Obst','Gemüse & Salat','Fleisch & Fisch','Beilagen','Kantine & Gerichte','Snacks & Süßes','Getränke'];
+const SLOTS = ['Frühstück','Mittag','Snack','Abend'];
+const RATE = [
+  { v:0, ic:'👎', t:'Lieber nicht', c:'#c0392b' },
+  { v:1, ic:'🙂', t:'In Ordnung', c:'#d4a017' },
+  { v:2, ic:'😋', t:'Super', c:'#7cb342' },
+  { v:3, ic:'🤩', t:'Top', c:'#2b8a57' }
+];
+
+
 /* =========================================================
    Datenspeicher + Abgleich (Google-Tabelle via Apps Script)
    ========================================================= */
@@ -770,6 +850,7 @@ const BADGES = [
   { id:'steps7', ic:'👣', t:'Schritt-Tagebuch', d:'7 Tage Schritte eingetragen', ok:x => x.stepDays >= 7 },
   { id:'bike10', ic:'🚲', t:'Radlerin', d:'10 Tage mit dem Rad zur Arbeit', only:'A', ok:x => x.bikeDays >= 10 },
   { id:'bike50', ic:'🌞', t:'Rad-Saison', d:'50 Tage mit dem Rad', only:'A', ok:x => x.bikeDays >= 50 },
+  { id:'diary7', ic:'📒', t:'Ehrlich gezählt', d:'7 Tage Essens-Tagebuch', ok:x => x.diaryDays >= 7 },
   { id:'team', ic:'🤝', t:'Team-Abend', d:'Beide am selben Tag trainiert', ok:x => x.team >= 1 },
   { id:'team10', ic:'💞', t:'Eingespielt', d:'10 gemeinsame Trainingsabende', ok:x => x.team >= 10 }
 ];
@@ -778,7 +859,7 @@ function badgeCtx(p){
   const tr = trainStats(p);
   const o = new Set(trainStats(other(p)).dates);
   return { tr, b: bodyStats(p), waterDays: list('water|' + p + '|').filter(r => (r.d.n || 0) >= s.waterGoal).length, team: tr.dates.filter(d => o.has(d)).length,
-    stepDays: list('steps|' + p + '|').filter(r => (r.d.n || 0) > 0).length, bikeDays: list('bike|A|').filter(r => r.d.on).length };
+    diaryDays: new Set(list('food|' + p + '|').map(r => r.d.date)).size, stepDays: list('steps|' + p + '|').filter(r => (r.d.n || 0) > 0).length, bikeDays: list('bike|A|').filter(r => r.d.on).length };
 }
 const badgesFor = p => BADGES.filter(b => !b.only || b.only === p);
 function earned(p){ const x = badgeCtx(p); return badgesFor(p).filter(b => { try { return b.ok(x); } catch(e){ return false; } }).map(b => b.id); }
@@ -907,6 +988,11 @@ function viewHeute(){
     <div class="row between"><div><div class="eyebrow">Wasser</div><h2 class="num" style="margin-top:4px">${fmtNum(w*0.25)} von ${fmtNum(wg*0.25)} Liter</h2></div><span class="pill ${w >= wg ? 'ok' : ''}">${w}/${wg} Gläser</span></div>
     <div class="glasses" aria-hidden="true">${glasses}</div>
     <div class="water-ctrl"><button class="round" data-act="water" data-d="-1" aria-label="Glas entfernen">−</button><button class="btn block" data-act="water" data-d="1">+ Glas Wasser (250 ml)</button></div>
+  </section>
+  ${(() => { const r = recipeFor(t); return new Date().getHours() >= 19 && r.ingr.length && (!rating(r.id, p) || rating(r.id, p).date !== t) ? `<section class="card"><div class="eyebrow">Abendessen bewerten</div><h2 style="margin:4px 0 0">Wie war ${esc(r.name)}?</h2><div class="ampel" style="margin-top:10px">${RATE.map(x => `<button style="--rc:${x.c}" data-act="rate" data-id="${r.id}" data-v="${x.v}"><span>${x.ic}</span>${x.t}</button>`).join('')}</div></section>` : ''; })()}
+  <section class="card">
+    <div class="row between"><div class="eyebrow">Gegessen heute</div><button class="btn sm soft" data-act="foodAddHeute">+ Eintragen</button></div>
+    <div style="margin-top:6px">${kcalBar(p, t)}</div>
   </section>
   <section class="card">
     <div class="row between"><div><div class="eyebrow">Schritte heute</div><h2 class="num" style="margin-top:4px">${steps(p) ? fmtNum(steps(p), 0) : '–'}</h2></div><span class="pill">Ø 7 Tage: ${stepsAvg(p) ? fmtNum(stepsAvg(p), 0) : '–'}</span></div>
@@ -1180,19 +1266,21 @@ function ingrLine(key, q){
   const u = it[2]; return `${u === 'Stk' ? q + ' ×' : q + ' ' + u} ${it[0]}`;
 }
 let ESSEN_W = 0;
+const essenTabs = () => `<div class="seg" style="width:100%;display:flex"><button style="flex:1" class="${ESSEN_TAB === 'plan' ? 'on' : ''}" data-act="essenTab" data-t="plan">🗓 Wochenplan</button><button style="flex:1" class="${ESSEN_TAB === 'tagebuch' ? 'on' : ''}" data-act="essenTab" data-t="tagebuch">📒 Tagebuch</button></div>`;
 function viewEssen(){
+  if (ESSEN_TAB === 'tagebuch') return essenTabs() + viewTagebuch();
   const p = me(), t = today(), dp = DAYPLAN[p];
   const cur = weekOf(t), nxt = addDays(cur, 7), mon = ESSEN_W ? nxt : cur;
   const planned = !!weekPlan(mon), days = planOrDefault(mon), dow = parseYmd(t).getDay();
   const prompt = !weekPlan(nxt) && [5,6,0].includes(dow);
-  return `
+  return essenTabs() + `
   ${prompt ? `<section class="card tint"><div class="eyebrow">${dow === 0 ? 'Heute ist Planungstag' : 'Bald ist Planungstag'}</div><h2 style="margin:4px 0 6px">Nächste Woche planen</h2><p class="small muted" style="margin:0 0 12px">Sucht euch für jeden Tag ein Faulenzer-Gericht aus – die Einkaufsliste entsteht automatisch.</p><button class="btn big block" data-act="planOpen" data-mon="${nxt}">🗓 Woche ${weekLabel(nxt)} planen</button></section>` : ''}
   <section>
     <div class="row between" style="margin:4px 2px 8px;gap:8px;flex-wrap:wrap"><div class="seg"><button class="${!ESSEN_W ? 'on' : ''}" data-act="essenW" data-w="0">Diese Woche</button><button class="${ESSEN_W ? 'on' : ''}" data-act="essenW" data-w="1">Nächste Woche</button></div>
       <button class="btn sm soft" data-act="planOpen" data-mon="${mon}">${planned ? 'Ändern' : 'Planen'}</button></div>
     <p class="small muted" style="margin:0 2px 8px">${weekLabel(mon)} · ${planned ? '<span style="color:var(--ok);font-weight:650">✓ geplant</span>' : 'noch nicht geplant – Standardwoche'}</p>
     ${WEEK_ORDER.map(wd => { const r = RECIPES[days[wd]] || RECIPES.frei; const d = addDays(mon, (wd + 6) % 7);
-      return `<button class="day ${d === t ? 'today' : ''}" data-act="recipe" data-id="${r.id}" data-date="${d}"><span class="wd">${WD[wd]}</span><span class="grow"><b>${esc(r.name)}</b><span class="small muted" style="display:block">${esc([minLabel(r), mainTags(r)].filter(Boolean).join(' · '))}</span></span><span class="muted">›</span></button>`; }).join('')}
+      return `<button class="day ${d === t ? 'today' : ''}" data-act="recipe" data-id="${r.id}" data-date="${d}"><span class="wd">${WD[wd]}</span><span class="grow"><b>${esc(r.name)}</b><span class="small muted" style="display:block">${esc([minLabel(r), mainTags(r)].filter(Boolean).join(' · '))}</span></span>${rateDots(r.id)}<span class="muted">›</span></button>`; }).join('')}
     <button class="btn ghost block" style="margin-top:10px" data-act="browse">Alle ${RCP.length} Rezepte ansehen</button>
   </section>
   <section class="card"><div class="eyebrow">${esc(PEOPLE[p].name)}s Tag</div><h2 style="margin:4px 0 6px">ca. ${fmtNum(PEOPLE[p].kcal,0)} kcal · ${PEOPLE[p].protein} g Eiweiß</h2>
@@ -1205,9 +1293,10 @@ function openRecipe(id, date){
   const hasCarb = r.ingr.some(([k]) => CARB_KEYS.includes(k));
   const wd = date ? parseYmd(date).getDay() : null;
   openSheet(`<div class="sheet-head"><div><div class="eyebrow">${date ? WDL[wd] + ', ' + fmtDate(date) : 'Rezept'}</div><h2>${esc(r.name)}</h2></div><button class="icon-btn" data-act="sheetClose" aria-label="Schließen">✕</button></div>
-    <div class="row" style="gap:6px;flex-wrap:wrap"><span class="pill">⏱ ${minLabel(r)}</span>${r.ingr.length ? '<span class="pill">max. 10 Min. Arbeit</span><span class="pill">2 Personen</span>' : ''}${r.tags.includes('fav') ? '<span class="pill me">Liebling</span>' : ''}</div>
+    <div class="row" style="gap:6px;flex-wrap:wrap"><span class="pill">⏱ ${minLabel(r)}</span>${r.ingr.length ? '<span class="pill">max. 10 Min. Arbeit</span><span class="pill">2 Personen</span>' : ''}${isFav(r) ? '<span class="pill me">Liebling</span>' : ''}${r.ingr.length ? `<span class="pill">ca. ${fmtNum(personNutr(r,'C').kcal,0)} kcal C · ${fmtNum(personNutr(r,'A').kcal,0)} kcal A</span>` : ''}</div>
     ${r.ingr.length ? `<div class="card" style="margin-top:12px"><h3>Zutaten</h3><ul class="ingr">${r.ingr.map(([k, q]) => `<li>${esc(ingrLine(k, q))}</li>`).join('')}</ul>${hasCarb ? '<p class="tiny muted" style="margin:8px 0 0">Beilage teilen: Christoffer ca. 40 %, Ariane ca. 60 %.</p>' : ''}</div>` : ''}
     <div class="card" style="margin-top:12px"><h3>So geht’s</h3><ol class="steps">${r.steps.map(([txt, min, l]) => `<li>${esc(txt)}${min ? `<div><button class="btn sm" data-act="kt" data-min="${min}" data-label="${esc(l || r.name)}">⏱ Timer ${min} Min.</button></div>` : ''}</li>`).join('')}</ol></div>
+    ${r.ingr.length ? rateRow(r.id) : ''}
     ${date ? `<button class="btn ghost block" style="margin-top:12px" data-act="swapDay" data-mon="${weekOf(date)}" data-wd="${wd}">Anderes Gericht für ${WDL[wd]}</button>` : ''}`);
 }
 
@@ -1240,18 +1329,19 @@ function renderPlanList(){
   const box = $('#planList'); if (!box) return;
   const q = PLAN.q.trim().toLowerCase(), f = PLAN.filter, browse = PLAN.pick === 'browse';
   const used = {}; if (!browse) WEEK_ORDER.forEach(wd => { if (wd !== PLAN.pick) used[PLAN.days[wd]] = WD[wd]; });
-  const rows = RCP.map(x => RECIPES[x[0]]).filter(r => (f === 'alle' || (f === 'schnell' ? r.min && r.min <= 15 : r.tags.includes(f)))
+  const rows = RCP.map(x => RECIPES[x[0]]).filter(r => (f === 'alle' || (f === 'schnell' ? r.min && r.min <= 15 : f === 'fav' ? isFav(r) : r.tags.includes(f)))
     && (!q || r.name.toLowerCase().includes(q) || r.ingr.some(([k]) => (ITEMS[k] ? ITEMS[k][0] : '').toLowerCase().includes(q))));
-  box.innerHTML = rows.length ? rows.map(r => `<button class="day pick ${!browse && PLAN.days[PLAN.pick] === r.id ? 'today' : ''}" data-act="${browse ? 'recipe' : 'planChoose'}" data-id="${r.id}"><span class="grow"><b>${esc(r.name)}</b><span class="small muted" style="display:block">${esc([minLabel(r), mainTags(r)].filter(Boolean).join(' · '))}${used[r.id] ? ` · <b>schon am ${used[r.id]}</b>` : ''}</span></span>${r.tags.includes('fav') ? '<span class="pill me">♥</span>' : ''}</button>`).join('')
+  box.innerHTML = rows.length ? rows.map(r => `<button class="day pick ${!browse && PLAN.days[PLAN.pick] === r.id ? 'today' : ''}" data-act="${browse ? 'recipe' : 'planChoose'}" data-id="${r.id}"><span class="grow"><b>${esc(r.name)}</b><span class="small muted" style="display:block">${esc([minLabel(r), mainTags(r)].filter(Boolean).join(' · '))}${used[r.id] ? ` · <b>schon am ${used[r.id]}</b>` : ''}${isBlocked(r) ? ' · <b style="color:var(--err)">lieber nicht</b>' : ''}</span></span>${rateDots(r.id)}${isFav(r) ? '<span class="pill me">♥</span>' : ''}</button>`).join('')
     : '<div class="empty">Nichts gefunden.</div>';
 }
 function diceWeek(){
   const prev = weekPlan(addDays(PLAN.mon, -7)) || {};
   const prevIds = new Set(Object.values(prev));
-  const pool = RCP.map(x => RECIPES[x[0]]).filter(r => r.id !== 'frei' && r.id !== 'reste');
+  const pool = RCP.map(x => RECIPES[x[0]]).filter(r => r.id !== 'frei' && r.id !== 'reste' && !isBlocked(r));
   const groups = ['Nudeln','Hähnchen','Pute & Rind','Fisch','Vegetarisch','Abendbrot'];
   for (let attempt = 0; attempt < 60; attempt++){
-    const shuffled = pool.slice().sort(() => Math.random() - .5).sort((a, b) => (prevIds.has(a.id) ? 1 : 0) - (prevIds.has(b.id) ? 1 : 0));
+    const score = r => Math.random() + (isFav(r) ? .45 : 0) + (ratingsOf(r.id).includes(2) ? .2 : 0) - (prevIds.has(r.id) ? 1 : 0);
+    const shuffled = pool.map(r => [score(r), r]).sort((a, b) => b[0] - a[0]).map(x => x[1]);
     const pick = [], cnt = {}; let ofen = 0;
     for (const r of shuffled){
       if (pick.length === 6) break;
@@ -1270,6 +1360,148 @@ function savePlan(){
   put('plan|' + PLAN.mon, { mon: PLAN.mon, days: Object.assign({}, PLAN.days) });
   const cur = weekOf(today()); ESSEN_W = PLAN.mon === cur ? 0 : 1; SHOP_W = ESSEN_W;
   closeSheet(); render(); toast('🗓 Woche gespeichert – Einkaufsliste ist fertig', 3200);
+}
+
+/* --- Bewertungen (Ampel) --- */
+const rating = (id, p) => { const r = get(`rate|${id}|${p}`); return r && r.v != null ? r : null; };
+function ratingsOf(id){ return ['C','A'].map(p => rating(id, p)).filter(Boolean).map(r => r.v); }
+const isBlocked = r => ratingsOf(r.id).includes(0);
+const isFav = r => !isBlocked(r) && (ratingsOf(r.id).includes(3) || r.tags.includes('fav'));
+function rateDots(id){
+  return ['C','A'].map(p => { const r = rating(id, p); if (!r) return ''; const x = RATE[r.v];
+    return `<span class="rdot" title="${esc(PEOPLE[p].name)}: ${x.t}" style="background:${x.c}">${PEOPLE[p].name[0]}</span>`; }).join('');
+}
+function rateRow(id){
+  const p = me(), mine = rating(id, p), o = rating(id, other(p));
+  return `<div class="card" style="margin-top:12px"><h3>Wie hat’s geschmeckt?</h3>
+    <div class="ampel">${RATE.map(x => `<button class="${mine && mine.v === x.v ? 'on' : ''}" style="--rc:${x.c}" data-act="rate" data-id="${id}" data-v="${x.v}"><span>${x.ic}</span>${x.t}</button>`).join('')}</div>
+    <p class="tiny muted" style="margin:8px 0 0">${o ? `${esc(PEOPLE[other(p)].name)}: ${RATE[o.v].ic} ${RATE[o.v].t}. ` : ''}„Top“ kommt zu den Lieblingen, „Lieber nicht“ schlägt der Würfel nicht mehr vor.</p></div>`;
+}
+
+/* --- Essens-Tagebuch --- */
+let ESSEN_TAB = 'plan', DIARY_D = null, FOOD = null;
+const diaryDate = () => DIARY_D || today();
+function goalKcal(p, date){ return PEOPLE[p].kcal + (p === 'A' && biked(date) ? 200 : 0); }
+function foodEntries(p, date){ return list(`food|${p}|${date}|`).map(r => Object.assign({ k: r.k }, r.d)).sort((a, b) => (a.ts || 0) - (b.ts || 0)); }
+function dayTotals(p, date){ const e = foodEntries(p, date); return { kcal: e.reduce((s, x) => s + (x.kcal || 0), 0), prot: e.reduce((s, x) => s + (x.prot || 0), 0), n: e.length }; }
+const myFoods = () => list('myfood|').map(r => Object.assign({ id: r.k, own: true }, r.d));
+function foodById(id){ return FOODS.find(f => f.id === id) || myFoods().find(f => f.id === id) || null; }
+function foodPortion(f, mult){
+  if (f.own) return { kcal: Math.round(f.kcal * mult), prot: Math.round((f.prot || 0) * mult) };
+  const g = f.g * mult; return { kcal: Math.round(f.k100 * g / 100), prot: Math.round(f.p100 * g / 100 * 10) / 10 };
+}
+function recentFoods(p){
+  const seen = new Set(), out = [];
+  list(`food|${p}|`).map(r => r.d).filter(d => d.fid).sort((a, b) => (b.ts || 0) - (a.ts || 0)).forEach(d => { if (!seen.has(d.fid) && out.length < 15){ const f = foodById(d.fid); if (f){ seen.add(d.fid); out.push(f); } } });
+  return out;
+}
+function autoSlot(){ const h = new Date().getHours() + new Date().getMinutes() / 60; return h < 10.5 ? 'Frühstück' : h < 14.5 ? 'Mittag' : h < 17.5 ? 'Snack' : 'Abend'; }
+function kcalBar(p, date){
+  const t = dayTotals(p, date), g = goalKcal(p, date), pct = clamp(t.kcal / g, 0, 1.2), over = t.kcal > g;
+  return `<div class="row between" style="align-items:flex-end"><div><h2 class="num">${fmtNum(t.kcal, 0)} <span class="muted small" style="font-weight:600">von ${fmtNum(g, 0)} kcal</span></h2>
+    <div class="small muted">${over ? `<b style="color:var(--err)">${fmtNum(t.kcal - g, 0)} kcal drüber</b>` : `noch ${fmtNum(g - t.kcal, 0)} kcal`} · Eiweiß ${fmtNum(t.prot, 0)}/${PEOPLE[p].protein} g${p === 'A' && biked(date) ? ' · inkl. +200 Radtag' : ''}</div></div></div>
+    <div class="bar"><i style="width:${Math.max(t.kcal ? 2 : 0, Math.min(pct, 1) * 100)}%;${over ? 'background:var(--err)' : ''}"></i></div>`;
+}
+function viewTagebuch(){
+  const p = me(), d = diaryDate(), t = today(), e = foodEntries(p, d);
+  const r = recipeFor(d), rn = personNutr(r, p), dinnerIn = e.some(x => x.src === r.id);
+  const label = d === t ? 'Heute' : d === addDays(t, -1) ? 'Gestern' : `${WD[parseYmd(d).getDay()]}, ${fmtDate(d)}`;
+  return `
+  <section class="card tint">
+    <div class="row between"><button class="icon-btn" data-act="diaryDay" data-d="-1" aria-label="Vortag">‹</button><b>${label}</b><button class="icon-btn" data-act="diaryDay" data-d="1" aria-label="Nächster Tag" ${d >= t ? 'disabled style="opacity:.35"' : ''}>›</button></div>
+    <div style="margin-top:12px">${kcalBar(p, d)}</div>
+    <button class="btn big block" style="margin-top:14px" data-act="foodAdd">+ Essen eintragen</button>
+    ${r.ingr.length && !dinnerIn ? `<button class="btn ghost block" style="margin-top:8px" data-act="foodRecipe" data-id="${r.id}">🍽 ${esc(r.name)} eintragen · ca. ${fmtNum(rn.kcal, 0)} kcal</button>` : ''}
+  </section>
+  ${SLOTS.map(sl => { const rows = e.filter(x => x.slot === sl); const sum = rows.reduce((s, x) => s + x.kcal, 0);
+    return `<section class="card"><div class="row between"><h3>${sl}</h3><span class="muted small num">${sum ? fmtNum(sum, 0) + ' kcal' : ''}</span></div>
+      ${rows.length ? `<ul class="list" style="margin-top:4px">${rows.map(x => `<li><div class="grow"><b>${esc(x.name)}</b><div class="small muted">${esc(x.amt || '')}${x.prot ? ' · ' + fmtNum(x.prot, 0) + ' g Eiweiß' : ''}</div></div><span class="num">${fmtNum(x.kcal, 0)}</span><button class="del-x" data-act="foodDel" data-k="${esc(x.k)}" aria-label="Löschen">✕</button></li>`).join('')}</ul>`
+        : `<button class="btn sm soft" style="margin-top:8px" data-act="foodAdd" data-slot="${sl}">+ ${sl}</button>`}</section>`; }).join('')}
+  <p class="tiny muted" style="text-align:center;margin:4px 0 0">Alle Werte sind Richtwerte. Rezepte: Christoffer ca. 45 %, Ariane ca. 55 % der Pfanne.</p>`;
+}
+function openFoodAdd(slot){
+  FOOD = { slot: slot || (diaryDate() === today() ? autoSlot() : 'Abend'), q: '', cat: recentFoods(me()).length ? 'Zuletzt' : 'Brot & Frühstück', sel: null, mult: 1 };
+  openSheet(''); renderFoodSheet();
+}
+function renderFoodSheet(){
+  if (FOOD.sel === 'new'){
+    setSheet(`<div class="sheet-head"><h2>Eigenes Lebensmittel</h2><button class="icon-btn" data-act="foodBack" aria-label="Zurück">‹</button></div>
+      <label class="field"><span>Name</span><input type="text" id="mfName" placeholder="z. B. Proteinbrot vom Bäcker" autocomplete="off"></label>
+      <label class="field"><span>Portion</span><input type="text" id="mfPor" placeholder="z. B. 1 Scheibe" autocomplete="off"></label>
+      <div class="grid2"><label class="field"><span>kcal pro Portion</span><input type="text" id="mfK" inputmode="numeric" autocomplete="off"></label>
+      <label class="field"><span>Eiweiß g (optional)</span><input type="text" id="mfP" inputmode="decimal" autocomplete="off"></label></div>
+      <p class="tiny muted">Die Werte stehen auf der Packung. Eigene Lebensmittel seht ihr beide.</p>
+      <button class="btn big block" style="margin-top:8px" data-act="foodNewSave">Speichern & eintragen</button>`);
+    return;
+  }
+  if (FOOD.sel){
+    const f = foodById(FOOD.sel); if (!f){ FOOD.sel = null; return renderFoodSheet(); }
+    const n = foodPortion(f, FOOD.mult);
+    setSheet(`<div class="sheet-head"><div><div class="eyebrow">${esc(FOOD.slot)}</div><h2>${esc(f.name)}</h2></div><button class="icon-btn" data-act="foodBack" aria-label="Zurück">‹</button></div>
+      <p class="muted small" style="margin:0">1 Portion = ${esc(f.own ? f.por : `${f.por} (${f.g} ${f.unit})`)} · ${fmtNum(foodPortion(f, 1).kcal, 0)} kcal</p>
+      <div class="stepper"><button class="round" data-act="foodMult" data-d="-0.5" aria-label="Weniger">−</button><div><b class="num" style="font-size:2.2rem">${fmtNum(FOOD.mult)}</b><div class="small muted">Portion${FOOD.mult === 1 ? '' : 'en'}</div></div><button class="round" data-act="foodMult" data-d="0.5" aria-label="Mehr">+</button></div>
+      ${f.own ? '' : `<label class="field"><span>…oder genau in ${f.unit}</span><input type="text" id="foodG" inputmode="numeric" placeholder="${Math.round(f.g * FOOD.mult)}" autocomplete="off"></label>`}
+      <div class="card" style="margin-top:12px;text-align:center"><b class="num" style="font-size:1.6rem" id="foodK">${fmtNum(n.kcal, 0)} kcal</b><div class="small muted" id="foodP">${fmtNum(n.prot, 0)} g Eiweiß</div></div>
+      <button class="btn big block" style="margin-top:12px" data-act="foodSave">Eintragen</button>`);
+    return;
+  }
+  setSheet(`<div class="sheet-head"><h2>Essen eintragen</h2><button class="icon-btn" data-act="sheetClose" aria-label="Schließen">✕</button></div>
+    <div class="seg" style="width:100%;display:flex">${SLOTS.map(s => `<button style="flex:1" class="${FOOD.slot === s ? 'on' : ''}" data-act="foodSlot" data-s="${s}">${s}</button>`).join('')}</div>
+    <input type="text" id="foodQ" style="margin-top:10px" placeholder="Suchen, z. B. Brötchen" value="${esc(FOOD.q)}" autocomplete="off" aria-label="Lebensmittel suchen">
+    <div class="chips">${FOOD_CATS.map(c => `<button class="${FOOD.cat === c ? 'on' : ''}" data-act="foodCat" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+    <div id="foodList"></div>
+    <button class="btn ghost block" style="margin-top:10px" data-act="foodNew">+ Eigenes Lebensmittel anlegen</button>`);
+  renderFoodList();
+}
+function renderFoodList(){
+  const box = $('#foodList'); if (!box) return;
+  const q = FOOD.q.trim().toLowerCase(); const all = FOODS.concat(myFoods());
+  const rows = q ? all.filter(f => f.name.toLowerCase().includes(q))
+    : FOOD.cat === 'Zuletzt' ? recentFoods(me()) : FOOD.cat === 'Eigene' ? myFoods() : FOODS.filter(f => f.cat === FOOD.cat);
+  box.innerHTML = rows.length ? rows.map(f => `<button class="day pick" data-act="foodPick" data-id="${esc(f.id)}"><span class="grow"><b>${esc(f.name)}</b><span class="small muted" style="display:block">${esc(f.por)} · ${fmtNum(foodPortion(f, 1).kcal, 0)} kcal${f.own ? ' · eigenes' : ''}</span></span><span class="muted">+</span></button>`).join('')
+    : `<div class="empty">${FOOD.cat === 'Zuletzt' && !q ? 'Noch nichts eingetragen.' : FOOD.cat === 'Eigene' && !q ? 'Noch keine eigenen Lebensmittel.' : 'Nichts gefunden – leg es unten selbst an.'}</div>`;
+}
+function foodCalc(){
+  const f = foodById(FOOD.sel); if (!f) return null;
+  const gIn = $('#foodG') ? parseFloat(String($('#foodG').value).replace(',', '.')) : NaN;
+  if (!f.own && gIn > 0) return { f, mult: gIn / f.g, amt: `${Math.round(gIn)} ${f.unit}` };
+  return { f, mult: FOOD.mult, amt: f.own ? `${fmtNum(FOOD.mult)} × ${f.por}` : `${fmtNum(FOOD.mult)} × ${f.por}` };
+}
+function addFood(entry){
+  const p = me(), d = diaryDate(), ts = Date.now();
+  put(`food|${p}|${d}|${uid()}`, Object.assign({ p, date: d, ts }, entry));
+}
+
+/* --- Einkaufsliste exportieren --- */
+function shopText(mon, wd){
+  let items, title;
+  if (wd == null){ items = shopItems(mon); title = `🛒 Einkauf Rewe – Woche ${weekLabel(mon)}`; }
+  else {
+    const r = RECIPES[planOrDefault(mon)[wd]] || RECIPES.frei; const date = addDays(mon, (wd + 6) % 7);
+    items = r.ingr.map(([k, q]) => ({ k: `shop|${mon}|${k}`, name: ITEMS[k][0], cat: ITEMS[k][1], q: ITEMS[k][1] === 'Vorrat prüfen' ? 'prüfen' : fmtQty(k, q), c: !!(get(`shop|${mon}|${k}`) || {}).c }));
+    title = `🛒 Einkauf für ${WDL[wd]}, ${fmtDate(date)}: ${r.name}`;
+  }
+  if (wd == null) items = items.concat(list('shopx|').map(r => ({ name: r.d.name, q: r.d.q || '', cat: 'Eigene Artikel', c: !!r.d.c })));
+  const open = items.filter(i => !i.c);
+  let txt = title + '\n';
+  SHOP_ORDER.forEach(cat => { const rows = open.filter(i => i.cat === cat).sort((a, b) => a.name.localeCompare(b.name, 'de')); if (!rows.length) return;
+    txt += `\n${cat}\n` + rows.map(i => `☐ ${i.name}${i.q ? ' – ' + i.q : ''}`).join('\n') + '\n'; });
+  if (!open.length) txt += '\nAlles schon eingekauft ✓\n';
+  return txt.trim() + '\n\n– aus Fit zu zweit';
+}
+async function shareText(title, txt){
+  if (navigator.share){ try { await navigator.share({ title, text: txt }); return; } catch(e){ if (e && e.name === 'AbortError') return; } }
+  try { await navigator.clipboard.writeText(txt); toast('Liste kopiert – jetzt einfügen, z. B. in WhatsApp'); }
+  catch(e){ download('einkaufsliste.txt', txt, 'text/plain'); }
+}
+function openShopExport(){
+  const mon = shopWeek(), days = planOrDefault(mon);
+  openSheet(`<div class="sheet-head"><div><div class="eyebrow">Einkaufsliste teilen</div><h2>Woche ${weekLabel(mon)}</h2></div><button class="icon-btn" data-act="sheetClose" aria-label="Schließen">✕</button></div>
+    <p class="small muted" style="margin:0 0 10px">Geht als Text raus – per WhatsApp, Notizen oder E-Mail. Bereits abgehakte Artikel werden weggelassen.</p>
+    <button class="btn big block" data-act="shopExport" data-wd="">Ganze Woche teilen</button>
+    <div class="block-title" style="margin-top:16px">Nur für einen Tag</div>
+    ${WEEK_ORDER.map(wd => { const r = RECIPES[days[wd]] || RECIPES.frei; return r.ingr.length ? `<button class="day" data-act="shopExport" data-wd="${wd}"><span class="wd">${WD[wd]}</span><span class="grow"><b>${esc(r.name)}</b><span class="small muted" style="display:block">${r.ingr.length} Zutaten</span></span><span class="muted">teilen ›</span></button>` : ''; }).join('')}
+    <button class="btn ghost block" style="margin-top:12px" data-act="shopDownload">Ganze Woche als Textdatei speichern</button>`);
 }
 
 /* --- Küchentimer --- */
@@ -1334,7 +1566,7 @@ function viewEinkauf(){
     <p class="small muted" style="margin:4px 0 0">Rewe · ${weekLabel(mon)} · ${planned ? 'aus eurem Wochenplan' : 'Standardwoche (noch nicht geplant)'}</p>
     <div class="bar"><i style="width:${total ? Math.max(2, done/total*100) : 0}%"></i></div>
     ${planned ? '' : `<button class="btn block" style="margin-top:12px" data-act="planOpen" data-mon="${mon}">🗓 Erst die Woche planen</button>`}
-    <div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap"><button class="btn sm soft" data-act="shopHide">${HIDE_DONE ? 'Erledigte zeigen' : 'Erledigte ausblenden'}</button><button class="btn sm ghost" data-act="shopReset" data-mon="${mon}">Alle Haken weg</button></div>
+    <div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap"><button class="btn sm soft" data-act="shopHide">${HIDE_DONE ? 'Erledigte zeigen' : 'Erledigte ausblenden'}</button><button class="btn sm ghost" data-act="shopReset" data-mon="${mon}">Alle Haken weg</button><button class="btn sm" data-act="shopShare">📤 Liste teilen</button></div>
     <details style="margin-top:10px"><summary class="small muted" style="cursor:pointer">Für ${dishes.length} Gerichte + Frühstück & Snacks</summary><p class="small muted" style="margin:6px 0 0">${dishes.map(esc).join(' · ')}</p></details>
   </section>
   ${html || '<div class="empty">Alles erledigt 🎉</div>'}
@@ -1468,7 +1700,7 @@ function openSettings(){
   <div class="card" style="margin-top:12px"><h3>Daten</h3>
     <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn sm soft" data-act="exportData">Sicherung herunterladen</button><label class="btn sm soft" style="cursor:pointer">Sicherung laden<input type="file" id="importFile" accept="application/json,.json" hidden></label></div>
   </div>
-  <p class="tiny faint" style="text-align:center;margin-top:14px">Fit zu zweit · Version 1.2</p>`);
+  <p class="tiny faint" style="text-align:center;margin-top:14px">Fit zu zweit · Version 1.3</p>`);
   $('#importFile').addEventListener('change', importData);
 }
 function gcalLink(){
@@ -1544,6 +1776,30 @@ const ACT = {
   planChoose: el => { PLAN.days[PLAN.pick] = el.dataset.id; if (PLAN.single){ savePlan(); return; } PLAN.pick = null; renderPlanner(); },
   planDice: () => { diceWeek(); renderPlanner(); vibrate(20); },
   planSave: () => savePlan(),
+  essenTab: el => { ESSEN_TAB = el.dataset.t; render(); },
+  rate: el => { const p = me(), v = +el.dataset.v, id = el.dataset.id; put(`rate|${id}|${p}`, { v, date: today() }); vibrate(20);
+    toast(`${RATE[v].ic} ${RATE[v].t}${v === 3 ? ' – kommt zu den Lieblingen' : v === 0 ? ' – wird nicht mehr vorgeschlagen' : ''}`);
+    const sh = $('#layer .sheet'); if (sh && el.closest('.sheet')) el.closest('.ampel').querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); render(); },
+  diaryDay: el => { const n = addDays(diaryDate(), +el.dataset.d); if (n > today()) return; DIARY_D = n === today() ? null : n; render(); },
+  foodAdd: el => openFoodAdd(el.dataset.slot),
+  foodAddHeute: () => { DIARY_D = null; openFoodAdd(); },
+  foodRecipe: el => { const r = RECIPES[el.dataset.id]; const n = personNutr(r, me()); addFood({ slot: 'Abend', name: r.name, amt: 'Portion aus dem Wochenplan', kcal: n.kcal, prot: n.prot, src: r.id }); render(); toast(`🍽 ${n.kcal} kcal eingetragen`); },
+  foodDel: el => { put(el.dataset.k, get(el.dataset.k) || {}, true); render(); },
+  foodSlot: el => { FOOD.slot = el.dataset.s; document.querySelectorAll('.sheet .seg button').forEach(b => b.classList.toggle('on', b.dataset.s === FOOD.slot)); },
+  foodCat: el => { FOOD.cat = el.dataset.c; FOOD.q = ''; const qi = $('#foodQ'); if (qi) qi.value = ''; document.querySelectorAll('.sheet .chips button').forEach(b => b.classList.toggle('on', b.dataset.c === FOOD.cat)); renderFoodList(); },
+  foodPick: el => { FOOD.sel = el.dataset.id; FOOD.mult = 1; renderFoodSheet(); },
+  foodBack: () => { FOOD.sel = null; renderFoodSheet(); },
+  foodMult: el => { FOOD.mult = clamp(Math.round((FOOD.mult + +el.dataset.d) * 2) / 2, 0.5, 20); renderFoodSheet(); },
+  foodSave: () => { const c = foodCalc(); if (!c) return; const n = foodPortion(c.f, c.mult);
+    addFood({ slot: FOOD.slot, name: c.f.name, amt: c.amt, kcal: n.kcal, prot: n.prot, fid: c.f.id }); closeSheet(); render(); toast(`✓ ${c.f.name} · ${n.kcal} kcal`); setTimeout(checkBadges, 300); },
+  foodNew: () => { FOOD.sel = 'new'; renderFoodSheet(); },
+  foodNewSave: () => { const name = $('#mfName').value.trim(); const kcal = parseFloat(String($('#mfK').value).replace(',', '.')); const prot = parseFloat(String($('#mfP').value).replace(',', '.')) || 0;
+    if (!name || !(kcal >= 0)) return toast('Bitte Name und kcal eintragen');
+    const id = 'myfood|' + uid(); put(id, { name, por: $('#mfPor').value.trim() || '1 Portion', kcal: Math.round(kcal), prot, cat: 'Eigene' });
+    FOOD.sel = id; FOOD.mult = 1; renderFoodSheet(); toast('Gespeichert – jetzt Menge wählen'); },
+  shopShare: () => openShopExport(),
+  shopExport: el => { const mon = shopWeek(); const wd = el.dataset.wd === '' ? null : +el.dataset.wd; shareText('Einkaufsliste', shopText(mon, wd)); },
+  shopDownload: () => { const mon = shopWeek(); download(`einkaufsliste-${mon}.txt`, shopText(mon, null), 'text/plain'); },
   kt: el => ktStart(+el.dataset.min, el.dataset.label),
   ktStop: el => { KT = KT.filter(t => t.id !== el.dataset.id); ktSave(); renderTimers(); ktLoop(); },
   ktAdd: el => { const t = KT.find(x => x.id === el.dataset.id); if (t){ t.endAt += 60000; ktSave(); renderTimers(); } },
@@ -1605,6 +1861,8 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('input', e => {
   if (e.target.id === 'planQ' && PLAN){ PLAN.q = e.target.value; renderPlanList(); }
+  if (e.target.id === 'foodQ' && FOOD){ FOOD.q = e.target.value; renderFoodList(); }
+  if (e.target.id === 'foodG' && FOOD){ const c = foodCalc(); if (c){ const n = foodPortion(c.f, c.mult); $('#foodK').textContent = fmtNum(n.kcal, 0) + ' kcal'; $('#foodP').textContent = fmtNum(n.prot, 0) + ' g Eiweiß'; } }
 });
 document.addEventListener('change', e => {
   const k = e.target.dataset && e.target.dataset.loc;
