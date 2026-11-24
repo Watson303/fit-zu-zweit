@@ -1,0 +1,1324 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fit zu zweit</title>
+<meta name="description" content="Ernährungs- und Sportplan für Christoffer und Ariane">
+<meta name="theme-color" content="#0A7FA6">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fit zu zweit">
+<style>
+:root{
+  --bg:#f6f3ee; --card:#ffffff; --ink:#1b2629; --muted:#56656a; --faint:#859196; --line:#e5dfd6; --soft:#efebe4;
+  --C:#0A7FA6; --A:#D9583B; --ok:#2b8a57; --warn:#b97f00; --err:#c0392b;
+  --me:var(--C); --me-soft:#e2f0f5; --C-soft:#e2f0f5; --A-soft:#fbe8e1;
+  --shadow:0 1px 2px rgba(20,30,35,.05),0 6px 18px rgba(20,30,35,.06);
+  --r:18px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101416; --card:#1a2023; --ink:#e9eff1; --muted:#a6b2b6; --faint:#7b878b; --line:#2a3236; --soft:#22292c;
+    --C:#0F8AA6; --A:#E2633F; --ok:#3aa56c; --warn:#d9a21b; --err:#e0645a;
+    --me-soft:#14303a; --C-soft:#14303a; --A-soft:#3a231b; --shadow:none; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101416; --card:#1a2023; --ink:#e9eff1; --muted:#a6b2b6; --faint:#7b878b; --line:#2a3236; --soft:#22292c;
+  --C:#0F8AA6; --A:#E2633F; --ok:#3aa56c; --warn:#d9a21b; --err:#e0645a;
+  --me-soft:#14303a; --C-soft:#14303a; --A-soft:#3a231b; --shadow:none; color-scheme: dark;
+}
+body.p-A{ --me:var(--A); --me-soft:var(--A-soft); }
+body.p-C{ --me:var(--C); --me-soft:var(--C-soft); }
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;min-height:100vh}
+body.noscroll{overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,h3{margin:0;line-height:1.2}
+h2{font-size:1.25rem;letter-spacing:-.01em}
+h3{font-size:1.02rem}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)} .faint{color:var(--faint)} .small{font-size:.86rem} .tiny{font-size:.76rem}
+.hidden{display:none!important}
+
+/* Kopfzeile */
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;flex:1;min-width:0;font-weight:750;letter-spacing:-.01em}
+.brand .logo{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,var(--C),var(--A));display:grid;place-items:center;flex:none}
+.brand .logo svg{width:18px;height:18px}
+.who{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px 6px 7px;font-weight:600;font-size:.92rem}
+.who .chip{width:20px;height:20px;border-radius:50%;background:var(--me);color:#fff;display:grid;place-items:center;font-size:.72rem;font-weight:800}
+.icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;padding:0}
+.icon-btn svg{width:20px;height:20px}
+.sync{width:40px;height:40px;border:0;background:transparent;display:grid;place-items:center;padding:0}
+.sync i{width:11px;height:11px;border-radius:50%;background:var(--faint);box-shadow:0 0 0 3px color-mix(in srgb,var(--faint) 25%,transparent)}
+.sync.ok i{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+.sync.busy i{background:var(--warn);animation:pulse 1s infinite}
+.sync.err i{background:var(--err);box-shadow:0 0 0 3px color-mix(in srgb,var(--err) 25%,transparent)}
+@keyframes pulse{50%{opacity:.35}}
+
+main{max-width:600px;margin:0 auto;padding:14px 16px calc(150px + env(safe-area-inset-bottom))}
+.stack>*+*{margin-top:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.card.tint{background:var(--me-soft);border-color:transparent}
+.row{display:flex;align-items:center;gap:10px}
+.row.between{justify-content:space-between}
+.grow{flex:1;min-width:0}
+.eyebrow{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--muted)}
+.hello{padding:4px 2px 2px}
+.hello h1{font-size:1.6rem;letter-spacing:-.02em}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:14px;padding:12px 18px;font-weight:700;background:var(--me);color:#fff;min-height:48px;text-decoration:none}
+.btn.block{width:100%}
+.btn.big{min-height:60px;font-size:1.1rem;border-radius:18px}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.soft{background:var(--soft);color:var(--ink)}
+.btn.danger{background:transparent;color:var(--err);border:1px solid color-mix(in srgb,var(--err) 40%,transparent)}
+.btn.sm{min-height:38px;padding:8px 12px;border-radius:11px;font-size:.9rem}
+.btn svg{width:20px;height:20px}
+.btn:disabled{opacity:.5}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:var(--soft);font-size:.8rem;font-weight:650;color:var(--muted)}
+.pill.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.pill.me{background:var(--me-soft);color:var(--me)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+.dot.C{background:var(--C)} .dot.A{background:var(--A)}
+
+/* Wasser */
+.glasses{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 4px}
+.glass{width:30px;height:38px;border:2px solid color-mix(in srgb,var(--C) 55%,var(--line));border-top:0;border-radius:0 0 8px 8px;position:relative;overflow:hidden;background:transparent;padding:0}
+.glass.full::after{content:"";position:absolute;inset:auto 0 0 0;height:78%;background:color-mix(in srgb,var(--C) 70%,#7fd3ea)}
+.water-ctrl{display:flex;gap:10px;align-items:center;margin-top:10px}
+.water-ctrl .btn{flex:1}
+.round{width:52px;height:52px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:1.5rem;font-weight:700;display:grid;place-items:center;padding:0;flex:none}
+
+/* Woche */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;text-align:center}
+.week .d{padding:7px 0 6px;border-radius:12px;font-size:.78rem;color:var(--muted);background:transparent}
+.week .d.plan{background:var(--soft);color:var(--ink);font-weight:650}
+.week .d.today{outline:2px solid var(--me);outline-offset:-2px}
+.week .dots{display:flex;gap:3px;justify-content:center;height:9px;margin-top:4px}
+
+/* Statistik */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.stat{background:var(--soft);border-radius:14px;padding:10px 8px;text-align:center}
+.stat b{display:block;font-size:1.25rem;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat span{font-size:.74rem;color:var(--muted)}
+.bar{height:10px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:12px}
+.bar>i{display:block;height:100%;background:var(--me);border-radius:99px}
+
+/* Listen */
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
+.list li:first-child{border-top:0}
+.ex-n{width:28px;height:28px;border-radius:9px;background:var(--me-soft);color:var(--me);display:grid;place-items:center;font-weight:800;font-size:.85rem;flex:none}
+details.card>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:700}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary::after{content:"";width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .2s;margin-right:4px}
+details.card[open]>summary::after{transform:rotate(-135deg)}
+.block-title{margin-top:14px;font-weight:700;font-size:.92rem;display:flex;gap:8px;align-items:center}
+.block-title:first-child{margin-top:4px}
+.note{border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 9%,transparent);padding:10px 12px;border-radius:0 12px 12px 0;font-size:.9rem}
+
+/* Kalender */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;margin-top:8px}
+.cal .h{font-size:.72rem;color:var(--muted);font-weight:700;padding:4px 0}
+.cal .c{aspect-ratio:1/1.05;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.85rem;gap:3px}
+.cal .c.plan{background:var(--soft)}
+.cal .c.today{outline:2px solid var(--me);outline-offset:-2px;font-weight:800}
+.cal .c.out{visibility:hidden}
+.cal .c .dots{display:flex;gap:3px;height:8px}
+.cal .c .dot{width:8px;height:8px}
+.legend{display:flex;gap:14px;font-size:.82rem;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+
+/* Essen */
+.day{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;border:1px solid var(--line);background:var(--card);width:100%;text-align:left}
+.day+.day{margin-top:8px}
+.day.today{border:2px solid var(--me);background:var(--me-soft)}
+.day .wd{width:40px;height:40px;border-radius:12px;background:var(--soft);display:grid;place-items:center;font-weight:800;font-size:.85rem;flex:none}
+.day.today .wd{background:var(--me);color:#fff}
+.meal{display:grid;grid-template-columns:64px 1fr;gap:4px 12px;padding:10px 0;border-top:1px solid var(--line)}
+.meal:first-of-type{border-top:0}
+.meal b{font-variant-numeric:tabular-nums}
+.ingr{margin:6px 0 0;padding-left:18px}
+.ingr li{margin:3px 0}
+.steps{list-style:none;padding:0;margin:8px 0 0;counter-reset:s}
+.steps li{counter-increment:s;position:relative;padding:10px 0 10px 40px;border-top:1px solid var(--line)}
+.steps li::before{content:counter(s);position:absolute;left:0;top:10px;width:28px;height:28px;border-radius:50%;background:var(--me-soft);color:var(--me);display:grid;place-items:center;font-weight:800;font-size:.85rem}
+.steps .btn{margin-top:8px}
+
+/* Einkauf */
+.shop-cat{margin-top:14px}
+.shop-cat h3{font-size:.8rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 4px 2px}
+.item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:14px;width:100%;text-align:left;min-height:56px}
+.item+.item{margin-top:6px}
+.item .box{width:26px;height:26px;border-radius:8px;border:2px solid var(--faint);flex:none;display:grid;place-items:center}
+.item.on .box{background:var(--ok);border-color:var(--ok)}
+.item.on .box::after{content:"";width:7px;height:12px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.item.on .t{text-decoration:line-through;color:var(--faint)}
+.item .q{margin-left:auto;font-size:.82rem;color:var(--muted);text-align:right;flex:none;max-width:42%}
+.item .del{border:0;background:transparent;color:var(--faint);padding:4px 6px;font-size:1.1rem}
+.add{display:flex;gap:8px;margin-top:10px}
+.add input,.add select{min-height:48px}
+
+/* Formulare */
+.field{display:block;margin-top:12px}
+.field>span{display:block;font-size:.82rem;font-weight:650;color:var(--muted);margin-bottom:5px}
+input[type=text],input[type=url],input[type=number],input[type=date],input[type=time],input[type=password],select{width:100%;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:11px 12px;min-height:46px;outline:none}
+input:focus,select:focus{border-color:var(--me);box-shadow:0 0 0 3px color-mix(in srgb,var(--me) 22%,transparent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.switch:first-of-type{border-top:0}
+.switch input{appearance:none;-webkit-appearance:none;width:50px;height:30px;border-radius:99px;background:var(--line);position:relative;flex:none;transition:background .2s;margin:0}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.switch input:checked{background:var(--me)}
+.switch input:checked::after{transform:translateX(20px)}
+.daypick{display:flex;gap:6px;flex-wrap:wrap}
+.daypick button{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-weight:700;font-size:.85rem;padding:0}
+.daypick button.on{background:var(--me);color:#fff;border-color:var(--me)}
+.seg{display:inline-flex;background:var(--soft);border-radius:12px;padding:3px;gap:3px}
+.seg button{border:0;background:transparent;border-radius:9px;padding:7px 13px;font-weight:650;font-size:.88rem;color:var(--muted)}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+/* Diagramm */
+.chart{position:relative;margin-top:10px}
+.chart svg{width:100%;height:auto;display:block;touch-action:pan-y}
+.chart .grid line{stroke:var(--line);stroke-width:1}
+.chart .axis text{fill:var(--faint);font-size:11px}
+.chart .goal line{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 5}
+.chart .goal text{fill:var(--muted);font-size:11px;font-weight:600}
+.chart .tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:.8rem;font-weight:650;padding:5px 9px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-120%);opacity:0;transition:opacity .12s}
+.chart .tip.on{opacity:1}
+.empty{padding:24px 12px;text-align:center;color:var(--muted);font-size:.92rem}
+
+/* Abzeichen */
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:10px}
+.badge{border-radius:14px;padding:12px 6px 10px;text-align:center;background:var(--soft);border:1px solid transparent}
+.badge .ic{font-size:1.7rem;line-height:1;filter:grayscale(1);opacity:.35}
+.badge b{display:block;font-size:.78rem;margin-top:6px;line-height:1.2}
+.badge span{display:block;font-size:.68rem;color:var(--muted);margin-top:3px;line-height:1.25}
+.badge.got{background:var(--me-soft);border-color:color-mix(in srgb,var(--me) 30%,transparent)}
+.badge.got .ic{filter:none;opacity:1}
+
+/* Navigation */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(5,1fr);background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+.tabs button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:.7rem;font-weight:650;color:var(--faint);border-radius:12px}
+.tabs button svg{width:24px;height:24px}
+.tabs button.on{color:var(--me)}
+.tabs button.on svg{transform:translateY(-1px)}
+
+/* Küchentimer */
+#timers{position:fixed;left:0;right:0;bottom:calc(68px + env(safe-area-inset-bottom));z-index:29;display:flex;flex-direction:column;gap:6px;padding:0 12px;pointer-events:none;max-width:600px;margin:0 auto}
+.kt{pointer-events:auto;display:flex;align-items:center;gap:10px;background:var(--ink);color:var(--bg);border-radius:14px;padding:9px 10px 9px 14px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+.kt b{font-variant-numeric:tabular-nums;font-size:1.1rem}
+.kt .l{flex:1;min-width:0;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kt button{border:0;background:color-mix(in srgb,var(--bg) 18%,transparent);color:var(--bg);border-radius:10px;padding:7px 10px;font-weight:700;font-size:.82rem}
+.kt.done{background:var(--A);color:#fff;animation:pulse 1s infinite}
+.kt.done button{color:#fff}
+
+/* Bottom-Sheet & Dialog */
+.scrim{position:fixed;inset:0;background:rgba(10,15,18,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
+.sheet{background:var(--bg);width:100%;max-width:600px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:8px 16px calc(24px + env(safe-area-inset-bottom));animation:up .2s ease-out}
+.sheet .grab{width:42px;height:5px;border-radius:9px;background:var(--line);margin:4px auto 10px}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.scrim.center{align-items:center;padding:16px;z-index:70}
+.dialog{background:var(--card);border-radius:20px;padding:20px;max-width:400px;width:100%;animation:up .18s ease-out}
+.dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+@keyframes up{from{transform:translateY(24px);opacity:.4}}
+@keyframes fade{from{opacity:0}}
+
+/* Toast */
+#toast{position:fixed;left:50%;top:calc(66px + env(safe-area-inset-top));transform:translate(-50%,-20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:14px;font-weight:650;font-size:.92rem;z-index:80;opacity:0;pointer-events:none;transition:all .25s;max-width:calc(100% - 32px);text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* Trainings-Player */
+.player{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;padding:calc(12px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom))}
+.player .ptop{display:flex;align-items:center;gap:10px}
+.player .pblock{flex:1;min-width:0;font-weight:700;font-size:.9rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player .pprog{height:6px;border-radius:9px;background:var(--soft);overflow:hidden;margin-top:10px}
+.player .pprog i{display:block;height:100%;background:var(--me);transition:width .3s}
+.player .pmain{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;min-height:0}
+.player .kind{font-size:.8rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.player .pname{font-size:1.7rem;font-weight:800;letter-spacing:-.02em;line-height:1.15;max-width:520px}
+.player .pset{font-size:1rem;color:var(--muted);font-weight:650}
+.ring{position:relative;width:min(62vw,270px);aspect-ratio:1;margin:8px 0}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:12}
+.ring .bg{stroke:var(--soft)}
+.ring .fg{stroke:var(--me);stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.ring .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .time{font-size:clamp(3rem,16vw,4.6rem);font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.03em;line-height:1}
+.ring .sub{font-size:.95rem;color:var(--muted);font-weight:650;margin-top:4px}
+.player.rest .ring .fg{stroke:var(--ok)} .player.rest .kind{color:var(--ok)}
+.player.prep .ring .fg{stroke:var(--warn)} .player.prep .kind{color:var(--warn)}
+.player.work .kind{color:var(--me)}
+.player .phint{font-size:.98rem;color:var(--muted);max-width:480px;min-height:2.9em}
+.player .pnext{font-size:.88rem;color:var(--faint)}
+.player .pctrl{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:10px}
+.player .pctrl .round{width:62px;height:62px}
+.player .pctrl .round svg{width:26px;height:26px}
+.player .pctrl .play{width:84px;height:84px;background:var(--me);border:0;color:#fff}
+.player .pctrl .play svg{width:34px;height:34px}
+.player .pdone{margin-top:12px}
+.finish{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px}
+.finish .big{font-size:4rem;line-height:1}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:90;overflow:hidden}
+.confetti i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;animation:fall 1.8s ease-in forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(540deg);opacity:.8}}
+
+/* Wer bist du */
+.whoami{display:grid;gap:12px;margin-top:14px}
+.whoami button{display:flex;align-items:center;gap:14px;padding:16px;border-radius:18px;border:2px solid var(--line);background:var(--card);text-align:left;font-weight:700;font-size:1.1rem}
+.whoami .av{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:1.2rem;flex:none}
+@media (min-width:700px){ main{padding-top:20px} }
+@media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
+</style>
+</head>
+<body class="p-C">
+<header class="top">
+  <div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/></svg></span><span>Fit zu zweit</span></div>
+  <button class="sync" id="syncBtn" data-act="sync" aria-label="Synchronisieren" title="Nicht verbunden"><i></i></button>
+  <button class="who" id="whoBtn" data-act="switchme" aria-label="Person wechseln"><span class="chip">C</span><span class="n">Christoffer</span></button>
+  <button class="icon-btn" data-act="settings" aria-label="Einstellungen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+</header>
+
+<main id="view" class="stack"></main>
+<div id="timers" aria-live="polite"></div>
+
+<nav class="tabs" aria-label="Bereiche">
+  <button data-act="nav" data-v="heute"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Heute</button>
+  <button data-act="nav" data-v="training"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 7v10M18 7v10M3 9.5v5M21 9.5v5M6 12h12"/></svg>Training</button>
+  <button data-act="nav" data-v="essen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8M4.5 3v5a2.5 2.5 0 0 0 5 0V3M7 11v10M17 21V3c-2.5 1.5-3.5 4-3.5 8h3.5"/></svg>Essen</button>
+  <button data-act="nav" data-v="einkauf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 11.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 8H6.2"/><circle cx="9.5" cy="20" r="1.3"/><circle cx="17.5" cy="20" r="1.3"/></svg>Einkauf</button>
+  <button data-act="nav" data-v="fortschritt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-7"/></svg>Erfolge</button>
+</nav>
+
+<div id="player" class="player hidden" role="dialog" aria-label="Training"></div>
+<div id="layer"></div>
+<div id="toast" role="status"></div>
+
+<script>
+'use strict';
+/* =========================================================
+   Grundlagen
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LS = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+const pad2 = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+const parseYmd = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const today = () => ymd(new Date());
+const addDays = (s, n) => { const d = parseYmd(s); d.setDate(d.getDate()+n); return ymd(d); };
+const daysBetween = (a, b) => Math.round((parseYmd(b) - parseYmd(a)) / 86400000);
+const fmtNum = (n, dig = 1) => Number(n).toLocaleString('de-DE', {minimumFractionDigits: 0, maximumFractionDigits: dig});
+const fmtDate = s => { const d = parseYmd(s); return `${pad2(d.getDate())}.${pad2(d.getMonth()+1)}.`; };
+const fmtClock = sec => `${Math.floor(sec/60)}:${pad2(Math.max(0, sec % 60))}`;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const WD = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+const WDL = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const MON = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+/* =========================================================
+   Inhalte: Personen, Training, Essen, Einkauf
+   ========================================================= */
+const PEOPLE = {
+  C: { name: 'Christoffer', kcal: 1700, protein: 120 },
+  A: { name: 'Ariane', kcal: 2000, protein: 110 }
+};
+const other = p => p === 'C' ? 'A' : 'C';
+const DEFAULTS = { start: '2026-11-23', days: [1,3,5], time: '18:30', startKg: {C:105, A:101}, goalKg: {C:88, A:80}, waterGoal: 8, setsOverride: 0 };
+
+const WORKOUTS = {
+  C: [
+    { type:'timed', title:'Aufwärmen', items:[
+      { name:'Schulterkreisen', sec:60, hint:'Langsam vor und zurück, Schultern locker lassen.' },
+      { name:'Arme kreisen', sec:60, hint:'Große Kreise, abwechselnd vorwärts und rückwärts.' },
+      { name:'Rumpf drehen im Sitzen', sec:60, hint:'Bremsen fest. Oberkörper ruhig nach links und rechts drehen.' },
+      { name:'Lockeres Luftboxen', sec:60, hint:'Locker in die Luft boxen und den Puls langsam hochbringen.' },
+      { name:'Handgelenke & Nacken lockern', sec:60, hint:'Handgelenke kreisen, Kopf sanft zur Seite neigen.' }
+    ]},
+    { type:'interval', title:'Wandbox-Cardio', name:'Wandbox im Sitzen', work:180, rest:30, prep:15, rounds:{base:2, full:3},
+      hint:'Mit Unterarm oder Faust-Manschette schlagen. Tempo so, dass du noch sprechen kannst.' },
+    { type:'reps', title:'Kraft mit Band', rest:30, prep:15, items:[
+      { name:'Band-Rudern', reps:12, hint:'Band am Türanker, Schlaufe ums Handgelenk. Ellenbogen nach hinten, Schulterblätter zusammen.' },
+      { name:'Band-Brustdrücken', reps:12, hint:'Band hinter dem Rollstuhl. Arme nach vorn strecken, langsam zurück.' },
+      { name:'Schulter seitlich heben', reps:10, hint:'Band unter dem Rad fixieren, Arm seitlich bis Schulterhöhe.' },
+      { name:'Bizeps mit Band-Schlaufe', reps:12, hint:'Schlaufe ums Handgelenk, Unterarm langsam beugen und strecken.' },
+      { name:'Rumpf seitlich neigen', reps:10, perSide:true, hint:'Band seitlich fixiert, kontrolliert zur Seite neigen – nur so weit, wie du sicher sitzt.' }
+    ]},
+    { type:'reps', title:'Beine (an guten Tagen)', optional:true, fixedSets:2, rest:30, prep:15, items:[
+      { name:'Aufstehen aus dem Stuhl', reps:5, hint:'Nur mit Haltegriff oder Hilfe. Langsam hoch, kurz stehen, kontrolliert setzen.' },
+      { name:'Rechtes Bein: Knie strecken', reps:10, hint:'Im Sitzen das Knie strecken und 2 Sekunden halten.' },
+      { name:'Linkes Bein aktiv bewegen', reps:10, hint:'Mit Unterstützung – Ariane kann führen. Spastik nutzen, nichts erzwingen.' }
+    ]},
+    { type:'timed', title:'Abkühlen', items:[
+      { name:'Brust dehnen', sec:60, hint:'Arme seitlich nach hinten, Brust öffnen, ruhig atmen.' },
+      { name:'Schultern dehnen', sec:60, hint:'Arm vor dem Körper zur Gegenseite, nach 30 Sekunden wechseln.' },
+      { name:'Handgelenke dehnen', sec:60, hint:'Handgelenke sanft beugen und strecken, ohne Druck.' },
+      { name:'Beine durchbewegen', sec:60, hint:'Beine nacheinander durchbewegen – gern mit Hilfe.' },
+      { name:'Ruhig atmen', sec:60, hint:'4 Sekunden ein, 6 Sekunden aus. Geschafft!' }
+    ]}
+  ],
+  A: [
+    { type:'timed', title:'Aufwärmen auf der Vibrationsplatte', items:[
+      { name:'Lockerer Stand', sec:60, hint:'Knie leicht gebeugt, Gewicht gleichmäßig verteilt.' },
+      { name:'Leichte Kniebeugen', sec:60, hint:'Langsam und klein, Knie über den Füßen.' },
+      { name:'Gewicht verlagern', sec:60, hint:'Von links nach rechts, locker in der Hüfte.' },
+      { name:'Arme kreisen', sec:60, hint:'Große Kreise, Schultern lockern.' }
+    ]},
+    { type:'circuit', title:'Vibrationsplatte', work:40, rest:15, prep:10, rounds:{base:1, full:2}, stations:[
+      { name:'Kniebeuge halten', hint:'Po nach hinten, Knie hinter den Zehen, Bauch fest.' },
+      { name:'Ausfallschritt links', hint:'Linker Fuß vorn auf der Platte, hinteres Knie Richtung Boden.' },
+      { name:'Ausfallschritt rechts', hint:'Rechter Fuß vorn auf der Platte.' },
+      { name:'Wadenheben', hint:'Auf der Platte langsam auf die Zehenspitzen und zurück.' },
+      { name:'Liegestütz', hint:'Hände auf der Platte, Knie am Boden ist völlig okay.' },
+      { name:'Plank', hint:'Unterarme auf der Platte, Körper gerade, Bauch fest.' }
+    ]},
+    { type:'interval', title:'Wandbox-Intervalle', name:'Wandboxen', work:60, rest:30, prep:10, rounds:{base:3, full:4},
+      hint:'Volles Tempo, Hüfte mitdrehen, locker in den Knien.' },
+    { type:'reps', title:'Kraft mit Band', rest:25, prep:10, items:[
+      { name:'Band-Rudern', reps:12, hint:'Band am Türanker, Ellenbogen eng nach hinten ziehen.' },
+      { name:'Glute Bridge mit Band', reps:12, hint:'Band über den Knien, Po hoch, oben kurz halten.' },
+      { name:'Seitliches Gehen mit Band', reps:10, perSide:true, hint:'Band um die Knöchel, leicht in die Knie, kleine Schritte.' },
+      { name:'Schulterdrücken mit Band', reps:12, hint:'Auf dem Band stehen, Arme über den Kopf drücken.' }
+    ]},
+    { type:'reps', title:'Matte', rest:25, prep:10, items:[
+      { name:'Dead Bug', reps:10, perSide:true, hint:'Rücken flach am Boden, Arm und Gegenbein langsam strecken.' },
+      { name:'Seitstütz', sec:20, perSide:true, hint:'Auf dem Unterarm, Hüfte hoch, Körper gerade. Knie am Boden geht auch.' }
+    ]},
+    { type:'timed', title:'Abkühlen', items:[
+      { name:'Hüftbeuger dehnen', sec:60, hint:'Halber Kniestand, Hüfte nach vorn schieben. Nach 30 Sekunden Seite wechseln.' },
+      { name:'Oberschenkel vorn dehnen', sec:60, hint:'Ferse zum Po, Knie zusammen. Nach 30 Sekunden wechseln.' },
+      { name:'Katze-Kuh', sec:60, hint:'Im Vierfüßlerstand Rücken rund und hohl im Atemrhythmus.' },
+      { name:'Kindhaltung', sec:60, hint:'Po zu den Fersen, Arme lang, ruhig atmen.' }
+    ]}
+  ]
+};
+
+const DAYPLAN = {
+  C: {
+    meals: [
+      ['08:00', 'Frühstück · ca. 400 kcal', '50 g Haferflocken mit Milch, Beeren und 1 EL Nussmus – oder 2 Scheiben Vollkornbrot mit Hüttenkäse und Putenaufschnitt.'],
+      ['12:30', 'Mittag · ca. 500 kcal', 'Reste vom Vorabend oder Kartoffeln/Reis mit Gemüse und Ei oder Fisch.'],
+      ['15:30', 'Snack · ca. 150 kcal', 'Skyr, Magerquark mit Obst oder eine Banane.'],
+      ['19:00', 'Abendessen · ca. 600 kcal', 'Siehe Wochenplan – weniger Beilage, mehr Gemüse.']
+    ],
+    tips: ['Feste Essenszeiten statt nach Lust und Laune.', 'Kaffee mit fettarmer Milch – ca. 30 kcal pro Tasse.', 'Gut verträglich: Möhren, Zucchini, Kürbis, Spinat, Fenchel, Pastinaken, Haferflocken, Reis, Kartoffeln.', 'Lieber meiden: Kohl, rohe Zwiebeln, Hülsenfrüchte, frisches Brot, Zuckeraustauschstoffe.', 'Ballaststoffe langsam steigern, 2 Liter trinken – Selter teils durch stilles Wasser ersetzen.']
+  },
+  A: {
+    meals: [
+      ['morgens', 'Kein Frühstück · Kaffee', 'Kaffee mit fettarmer Milch. Wenn der Hunger kommt: ein Skyr.'],
+      ['mittags', 'Kantine · ca. 800 kcal', 'Gemüse oder Salat zuerst, Soße extra, halbe Portion Beilage, Obst statt Dessert.'],
+      ['15:30', 'Snack · ca. 200 kcal', 'Skyr oder ein Apfel mit einer Handvoll Nüssen – gegen Heißhunger am Abend.'],
+      ['19:00', 'Abendessen · ca. 750 kcal', 'Siehe Wochenplan – etwas mehr Beilage als Christoffer.']
+    ],
+    tips: ['Teller-Regel: halb Gemüse, ein Viertel Eiweiß, ein Viertel Beilage.', 'Hähnchenbrust, Pute, Fisch, mageres Rind, Eier und Quark sind gute Eiweißquellen.', 'Zwei warme Mahlzeiten am Tag sind völlig in Ordnung – es zählt die Tagesmenge.']
+  }
+};
+
+const RECIPES = {
+  1: { name:'One-Pot-Nudeln', time:'20 Min.', work:'5 Min. Arbeit',
+    ingr:['150 g Vollkornnudeln (Christoffer 65 g, Ariane 85 g)','300 g Putenhack','500 g passierte Tomaten','300 g TK-Zucchini oder Grillgemüse','400 ml Wasser','1 TL Öl, Salz, Pfeffer, Italienische Kräuter'],
+    steps:[{t:'Öl im großen Topf erhitzen, Putenhack krümelig anbraten.', min:4, l:'Hack anbraten'},{t:'Nudeln, passierte Tomaten, TK-Gemüse und Wasser dazu, würzen und einmal aufkochen.'},{t:'Deckel drauf und köcheln lassen, zwischendurch einmal umrühren.', min:12, l:'Nudeln köcheln'},{t:'Abschmecken, fertig. Christoffer weniger Nudeln, dafür mehr Soße und Gemüse.'}] },
+  2: { name:'Lachs vom Blech', time:'35 Min.', work:'5 Min. Arbeit',
+    ingr:['2 Lachsfilets (TK, ca. 250 g)','600 g Drillinge','400 g TK-Möhren','1 EL Rapsöl, Salz, Pfeffer, Kräuter','Zitrone nach Geschmack'],
+    steps:[{t:'Ofen auf 200 °C Umluft vorheizen. Drillinge halbieren, mit Öl und Salz aufs Blech.'},{t:'Kartoffeln vorbacken.', min:15, l:'Kartoffeln vorbacken'},{t:'Lachs (gern direkt gefroren) und TK-Möhren dazulegen, würzen.'},{t:'Fertig backen, bis der Lachs durch ist.', min:20, l:'Lachs im Ofen'}] },
+  3: { name:'Hähnchen-Reis-Pfanne', time:'15 Min.', work:'5 Min. Arbeit',
+    ingr:['2 Beutel Express-Reis','300 g Hähnchenbrust-Streifen','300 g TK-Paprika-Streifen','150 g TK-Blattspinat','1 TL Öl, Paprikapulver, Salz, Pfeffer, etwas Sojasoße'],
+    steps:[{t:'Öl in der großen Pfanne erhitzen, Hähnchenstreifen rundum anbraten.', min:5, l:'Hähnchen braten'},{t:'TK-Paprika und Spinat dazu und mitbraten.', min:5, l:'Gemüse braten'},{t:'Express-Reis dazu, durchschwenken und würzen.', min:3, l:'Reis erwärmen'}] },
+  4: { name:'Spinat-Feta-Pasta', time:'15 Min.', work:'5 Min. Arbeit',
+    ingr:['150 g Vollkornnudeln (Christoffer 65 g, Ariane 85 g)','200 g TK-Blattspinat','100 g Frischkäse light','75 g Feta light','Knoblauchpulver, Pfeffer, Muskat','Für mehr Eiweiß: Hähnchen-Rest vom Mittwoch'],
+    steps:[{t:'Nudeln in Salzwasser kochen (Zeit laut Packung).', min:10, l:'Nudeln kochen'},{t:'In den letzten 2 Minuten den TK-Spinat mit ins Nudelwasser geben.'},{t:'Abgießen und dabei eine Tasse Nudelwasser auffangen.'},{t:'Frischkäse und zerbröselten Feta unterrühren, mit etwas Nudelwasser cremig machen, würzen.'}] },
+  5: { name:'Blech-Hähnchen', time:'30 Min.', work:'5 Min. Arbeit',
+    ingr:['400 g Hähnchenbrust','450 g TK-Ofengemüse (ohne Kohl und Zwiebeln)','400 g TK-Kartoffelspalten','1 EL Rapsöl, Paprikapulver, Salz, Kräuter'],
+    steps:[{t:'Ofen auf 200 °C Umluft vorheizen.'},{t:'Hähnchen in Stücke schneiden, mit Gemüse und Kartoffelspalten aufs Blech, Öl und Gewürze drüber, durchmischen.'},{t:'Backen, nach der Hälfte einmal wenden.', min:28, l:'Blech-Hähnchen'}] },
+  6: { name:'Wrap-Abend', time:'10 Min.', work:'jeder rollt selbst',
+    ingr:['4 Vollkorn-Wraps','150 g Putenaufschnitt oder Hähnchen-Reste','Salat und 1 Gurke','200 g Kräuterquark light'],
+    steps:[{t:'Gurke in Streifen schneiden, Salat waschen – alles auf den Tisch.'},{t:'Optional: Wraps kurz ohne Fett in der Pfanne erwärmen.', min:1, l:'Wraps erwärmen'},{t:'Kräuterquark drauf, belegen, einrollen. Christoffer 1–2 Wraps, Ariane 2.'}] },
+  0: { name:'Freies Genussessen', time:'frei', work:'normale Portion',
+    ingr:['Was ihr mögt – ein Genussessen, kein Schlemmertag.'],
+    steps:[{t:'Gern doppelt kochen: Dann habt ihr Montag oder Dienstag Reste fürs Mittagessen.'},{t:'Ein Nudelgericht mit viel Gemüse geht immer.'}] }
+};
+const WEEK_ORDER = [1,2,3,4,5,6,0];
+
+const SHOP = [
+  ['Gemüse & Obst', [['kart','Drillinge/Kartoffeln','2 kg'],['spalten','Kartoffelspalten (TK, ungewürzt)','1 Beutel'],['salat','Salat','1–2'],['gurke','Gurke','1'],['banane','Bananen','4'],['apfel','Äpfel','6'],['beeren','Beeren (TK)','1 Beutel']]],
+  ['Tiefkühl', [['lachs','Lachsfilets','2 Pck. (ca. 500 g)'],['spinat','Blattspinat','2 Pck.'],['zucchini','Zucchini oder Grillgemüse','1 Beutel'],['moehren','Möhren','1 Beutel'],['paprika','Paprika-Streifen','1 Beutel'],['ofengem','Ofengemüse ohne Kohl & Zwiebeln','1 Beutel']]],
+  ['Fleisch & Wurst', [['putenhack','Putenhack','500 g'],['haehnchen','Hähnchenbrust bzw. -streifen','1 kg'],['putenauf','Putenaufschnitt','2 Pck.']]],
+  ['Kühlregal', [['milch','Fettarme Milch','3 l'],['skyr','Skyr natur','4 Becher'],['quark','Magerquark','2 Becher'],['huette','Hüttenkäse','2 Becher'],['frischk','Frischkäse light','2 Pck.'],['feta','Feta light','1 Pck.'],['kraeuterq','Kräuterquark light','1 Becher'],['eier','Eier','10 Stück']]],
+  ['Trockenware & Vorrat', [['nudeln','Vollkornnudeln','1 kg'],['reis','Express-Reis','3 Beutel'],['hafer','Haferflocken','500 g'],['tomaten','Passierte Tomaten','2 Pck.'],['wraps','Vollkorn-Wraps','1 Pck.'],['brot','Vollkornbrot (geschnitten)','1'],['nussmus','Nussmus/Erdnussbutter (100 % Nuss)','1 Glas'],['nuesse','Ungesalzene Nüsse','200 g'],['gewuerze','Rapsöl, Kräuter, Paprikapulver','falls nicht da']]],
+  ['Getränke', [['wasser','Stilles Wasser & Selter','nach Bedarf']]]
+];
+const SHOP_CATS = SHOP.map(c => c[0]);
+
+/* =========================================================
+   Datenspeicher + Abgleich (Google-Tabelle via Apps Script)
+   ========================================================= */
+const DB = {
+  recs: LS.get('fz_recs', {}),
+  dirty: new Set(LS.get('fz_dirty', [])),
+  since: LS.get('fz_since', 0),
+  cfg: LS.get('fz_cfg', { url:'https://script.google.com/macros/s/AKfycbzmSAAVsaCUtQpLl7IaQGDgwctQhlWOupALZOGokxCeWYah3iGlAduLOSAsnIRrEWAx/exec', code:'' }),
+  lastSync: LS.get('fz_lastsync', 0)
+};
+function persist(){
+  LS.set('fz_recs', DB.recs); LS.set('fz_dirty', [...DB.dirty]); LS.set('fz_since', DB.since); LS.set('fz_cfg', DB.cfg); LS.set('fz_lastsync', DB.lastSync);
+}
+function put(k, d, del){
+  const r = { k, t: Date.now(), d };
+  if (del) r.x = 1;
+  DB.recs[k] = r; DB.dirty.add(k); persist(); scheduleSync();
+}
+function get(k){ const r = DB.recs[k]; return r && !r.x ? r.d : null; }
+function list(prefix){ return Object.values(DB.recs).filter(r => !r.x && r.k.startsWith(prefix)); }
+
+let syncTimer = null, syncing = false, syncAgain = false, syncState = 'off', syncMsg = '';
+function scheduleSync(){ clearTimeout(syncTimer); syncTimer = setTimeout(sync, 1500); }
+function setSync(state, msg){
+  syncState = state; syncMsg = msg || '';
+  const b = $('#syncBtn'); b.className = 'sync ' + (state === 'ok' ? 'ok' : state === 'busy' ? 'busy' : state === 'err' ? 'err' : '');
+  b.title = { off:'Nicht verbunden – in den Einstellungen einrichten', ok:'Synchronisiert', busy:'Synchronisiere …', err:'Fehler: ' + syncMsg }[state] || '';
+}
+async function sync(manual){
+  if (!DB.cfg.url || !DB.cfg.code){ setSync('off'); if (manual) openSettings(); return; }
+  if (!navigator.onLine){ setSync('err', 'Offline'); return; }
+  if (syncing){ syncAgain = true; return; }
+  syncing = true; setSync('busy');
+  const keys = [...DB.dirty];
+  const sentT = {}; const records = [];
+  keys.forEach(k => { const r = DB.recs[k]; if (r){ sentT[k] = r.t; records.push(r); } });
+  try {
+    const res = await fetch(DB.cfg.url, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ code: DB.cfg.code, since: DB.since, records }) });
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error || 'Unbekannter Fehler');
+    keys.forEach(k => { if (DB.recs[k] && DB.recs[k].t === sentT[k]) DB.dirty.delete(k); });
+    let changed = false;
+    (j.records || []).forEach(r => {
+      if (!r || !r.k) return;
+      const l = DB.recs[r.k];
+      if (!l || (r.t > l.t)){ DB.recs[r.k] = r; changed = true; }
+    });
+    DB.since = Math.max(0, (j.now || Date.now()) - 1);
+    DB.lastSync = Date.now();
+    persist(); setSync('ok');
+    if (changed){ render(); checkBadges(); }
+    if (manual) toast('Synchronisiert ✓');
+  } catch (e){
+    setSync('err', e.message || String(e));
+    if (manual) toast('Abgleich fehlgeschlagen: ' + (e.message || e));
+  } finally {
+    syncing = false;
+    if (syncAgain){ syncAgain = false; setTimeout(sync, 300); }
+    if ($('#setSyncInfo')) $('#setSyncInfo').innerHTML = syncInfoHtml();
+  }
+}
+
+/* Lokale Einstellungen (nur dieses Gerät) */
+const LOC = Object.assign({ handsfree: true, voice: true, sound: true }, LS.get('fz_loc', {}));
+const saveLoc = () => LS.set('fz_loc', LOC);
+const me = () => LS.get('fz_me', null) || 'C';
+function settings(){
+  const s = get('set|global') || {};
+  return {
+    start: s.start || DEFAULTS.start,
+    days: Array.isArray(s.days) && s.days.length ? s.days : DEFAULTS.days,
+    time: s.time || DEFAULTS.time,
+    startKg: { C: num(s.startKg?.C, DEFAULTS.startKg.C), A: num(s.startKg?.A, DEFAULTS.startKg.A) },
+    goalKg: { C: num(s.goalKg?.C, DEFAULTS.goalKg.C), A: num(s.goalKg?.A, DEFAULTS.goalKg.A) },
+    waterGoal: num(s.waterGoal, DEFAULTS.waterGoal),
+    setsOverride: num(s.setsOverride, 0)
+  };
+}
+function num(v, d){ const n = Number(v); return Number.isFinite(n) && n > 0 ? n : d; }
+function saveSettings(patch){ put('set|global', Object.assign(settings(), patch)); }
+
+/* =========================================================
+   Auswertungen
+   ========================================================= */
+function trainWeek(){ const s = settings(); return Math.max(1, Math.floor(daysBetween(s.start, today()) / 7) + 1); }
+function currentSets(){ const s = settings(); if (s.setsOverride) return s.setsOverride; return trainWeek() <= 2 ? 2 : 3; }
+function isTrainDay(dateStr){ return settings().days.includes(parseYmd(dateStr).getDay()); }
+function trainings(p){ return list('train|' + p + '|').map(r => r.d).sort((a,b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.ts||0) - (b.ts||0)); }
+function trainStats(p){
+  const all = trainings(p);
+  const dates = [...new Set(all.map(t => t.date))].sort();
+  let best = 0, run = 0, prev = null;
+  dates.forEach(d => { run = (prev && daysBetween(prev, d) <= 3) ? run + 1 : 1; best = Math.max(best, run); prev = d; });
+  const cur = (prev && daysBetween(prev, today()) <= 3) ? run : 0;
+  const minutes = all.reduce((s, t) => s + (t.min || 0), 0);
+  return { count: all.length, dates, best, cur, last: prev, minutes };
+}
+function trainedOn(p, date){ return list('train|' + p + '|').some(r => r.d.date === date); }
+function water(p, date){ return (get(`water|${p}|${date || today()}`) || {}).n || 0; }
+function bodyRows(p){ return list('body|' + p + '|').map(r => Object.assign({ k: r.k }, r.d)).sort((a,b) => a.date < b.date ? -1 : 1); }
+function bodyStats(p){
+  const s = settings(); const rows = bodyRows(p);
+  const kg = rows.filter(r => r.kg > 0); const wa = rows.filter(r => r.waist > 0);
+  const startKg = s.startKg[p], goal = s.goalKg[p];
+  const cur = kg.length ? kg[kg.length-1].kg : startKg;
+  const lost = startKg - cur;
+  const pct = startKg > goal ? clamp(lost / (startKg - goal), 0, 1) : 0;
+  const waistLost = wa.length >= 2 ? wa[0].waist - wa[wa.length-1].waist : 0;
+  return { rows, kg, wa, startKg, goal, cur, lost, toGo: Math.max(0, cur - goal), pct, waistLost, waistCur: wa.length ? wa[wa.length-1].waist : null };
+}
+
+const BADGES = [
+  { id:'t1', ic:'👟', t:'Erster Schritt', d:'1. Training', ok:x => x.tr.count >= 1 },
+  { id:'t5', ic:'💪', t:'Dranbleiber', d:'5 Trainings', ok:x => x.tr.count >= 5 },
+  { id:'t10', ic:'🔟', t:'Zehner', d:'10 Trainings', ok:x => x.tr.count >= 10 },
+  { id:'t25', ic:'🏅', t:'25er-Club', d:'25 Trainings', ok:x => x.tr.count >= 25 },
+  { id:'t50', ic:'🏆', t:'50er-Club', d:'50 Trainings', ok:x => x.tr.count >= 50 },
+  { id:'s3', ic:'🔥', t:'Serie 3', d:'3 Trainings in Folge', ok:x => x.tr.best >= 3 },
+  { id:'s6', ic:'⚡', t:'Serie 6', d:'2 Wochen dran', ok:x => x.tr.best >= 6 },
+  { id:'s12', ic:'🌟', t:'Serie 12', d:'4 Wochen dran', ok:x => x.tr.best >= 12 },
+  { id:'w7', ic:'💧', t:'Wasser-Profi', d:'7 Tage Wasserziel', ok:x => x.waterDays >= 7 },
+  { id:'w30', ic:'🌊', t:'Wasser-Meister', d:'30 Tage Wasserziel', ok:x => x.waterDays >= 30 },
+  { id:'k1', ic:'🎈', t:'Erstes Kilo', d:'1 kg weniger', ok:x => x.b.lost >= 1 },
+  { id:'k5', ic:'🎯', t:'Minus 5', d:'5 kg weniger', ok:x => x.b.lost >= 5 },
+  { id:'half', ic:'⛰️', t:'Halbzeit', d:'Halber Weg zum Ziel', ok:x => x.b.pct >= .5 },
+  { id:'k10', ic:'🚀', t:'Minus 10', d:'10 kg weniger', ok:x => x.b.lost >= 10 },
+  { id:'goal', ic:'👑', t:'Ziel erreicht', d:'Zielgewicht geschafft', ok:x => x.b.kg.length > 0 && x.b.cur <= x.b.goal },
+  { id:'b5', ic:'📏', t:'Bauch −5 cm', d:'5 cm Bauchumfang weg', ok:x => x.b.waistLost >= 5 },
+  { id:'team', ic:'🤝', t:'Team-Abend', d:'Beide am selben Tag trainiert', ok:x => x.team >= 1 },
+  { id:'team10', ic:'💞', t:'Eingespielt', d:'10 gemeinsame Trainingsabende', ok:x => x.team >= 10 }
+];
+function badgeCtx(p){
+  const s = settings();
+  const tr = trainStats(p);
+  const o = new Set(trainStats(other(p)).dates);
+  return { tr, b: bodyStats(p), waterDays: list('water|' + p + '|').filter(r => (r.d.n || 0) >= s.waterGoal).length, team: tr.dates.filter(d => o.has(d)).length };
+}
+function earned(p){ const x = badgeCtx(p); return BADGES.filter(b => { try { return b.ok(x); } catch(e){ return false; } }).map(b => b.id); }
+function checkBadges(silent){
+  const p = LS.get('fz_me', null); if (!p) return;
+  const key = 'fz_seen_' + p; const seen = LS.get(key, null); const now = earned(p);
+  if (seen === null || silent){ LS.set(key, now); return; }
+  const fresh = now.filter(id => !seen.includes(id));
+  if (fresh.length){
+    LS.set(key, now);
+    const b = BADGES.find(x => x.id === fresh[0]);
+    confetti(); beep(988, .12); setTimeout(() => beep(1318, .18), 140);
+    toast(`${b.ic} Neues Abzeichen: ${b.t}!` + (fresh.length > 1 ? ` (+${fresh.length-1})` : ''), 4000);
+  }
+}
+
+/* =========================================================
+   Ton, Sprache, Bildschirm wach halten, Benachrichtigungen
+   ========================================================= */
+let AC = null;
+function unlockAudio(){ try { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch(e){} }
+function beep(freq = 880, dur = .12, vol = .25){
+  if (!LOC.sound) return;
+  try { unlockAudio(); if (!AC) return;
+    const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, AC.currentTime); g.gain.exponentialRampToValueAtTime(.001, AC.currentTime + dur);
+    o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + dur + .02);
+  } catch(e){}
+}
+function vibrate(p){ try { navigator.vibrate && navigator.vibrate(p); } catch(e){} }
+let germanVoice = null;
+function pickVoice(){ try { const v = speechSynthesis.getVoices(); germanVoice = v.find(x => /^de/i.test(x.lang)) || null; } catch(e){} }
+if ('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function say(text){
+  if (!LOC.voice || !('speechSynthesis' in window)) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'de-DE'; if (germanVoice) u.voice = germanVoice; u.rate = 1.02; speechSynthesis.speak(u); } catch(e){}
+}
+let wakeLockObj = null, wakeWanted = false;
+async function wakeLock(on){
+  wakeWanted = on;
+  try {
+    if (on && 'wakeLock' in navigator && !wakeLockObj){ wakeLockObj = await navigator.wakeLock.request('screen'); wakeLockObj.addEventListener('release', () => { wakeLockObj = null; }); }
+    if (!on && wakeLockObj){ await wakeLockObj.release(); wakeLockObj = null; }
+  } catch(e){}
+}
+async function notify(title, body){
+  try {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const reg = await navigator.serviceWorker?.getRegistration();
+    if (reg) reg.showNotification(title, { body, icon:'icons/icon-192.png', badge:'icons/icon-192.png', vibrate:[300,150,300], tag:'fz-' + title });
+    else new Notification(title, { body });
+  } catch(e){}
+}
+
+/* =========================================================
+   Kleine UI-Helfer
+   ========================================================= */
+let toastT = null;
+function toast(msg, ms = 2400){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), ms); }
+function confetti(){
+  const box = document.createElement('div'); box.className = 'confetti';
+  const cols = ['var(--C)','var(--A)','var(--ok)','var(--warn)'];
+  for (let i = 0; i < 46; i++){ const c = document.createElement('i'); c.style.left = Math.random()*100 + '%'; c.style.background = cols[i % 4]; c.style.animationDelay = (Math.random()*.5) + 's'; c.style.animationDuration = (1.4 + Math.random()*.9) + 's'; box.appendChild(c); }
+  document.body.appendChild(box); setTimeout(() => box.remove(), 2800);
+}
+function openSheet(html, onClose){
+  const l = document.createElement('div'); l.className = 'scrim';
+  l.innerHTML = `<div class="sheet" role="dialog"><div class="grab"></div>${html}</div>`;
+  l.addEventListener('click', e => { if (e.target === l) closeSheet(); });
+  $('#layer').innerHTML = ''; $('#layer').appendChild(l); document.body.classList.add('noscroll');
+  l._onClose = onClose;
+  return l;
+}
+function closeSheet(){ const l = $('#layer .scrim'); if (l && l._onClose) l._onClose(); $('#layer').innerHTML = ''; if ($('#player').classList.contains('hidden')) document.body.classList.remove('noscroll'); }
+function ask(title, text, buttons){
+  return new Promise(res => {
+    const l = document.createElement('div'); l.className = 'scrim center';
+    l.innerHTML = `<div class="dialog" role="alertdialog"><h2>${esc(title)}</h2>${text ? `<p class="muted">${text}</p>` : ''}<div class="acts">${buttons.map((b,i) => `<button class="btn ${b.cls||''} block" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
+    l.addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b){ l.remove(); res(buttons[+b.dataset.i].value); } else if (e.target === l){ l.remove(); res(null); } });
+    document.body.appendChild(l);
+  });
+}
+
+/* =========================================================
+   Ansichten
+   ========================================================= */
+let VIEW = 'heute', PROG_P = null, CHART_M = 'kg', CAL_M = null, HIDE_DONE = LS.get('fz_hidedone', false);
+function setView(v){ VIEW = v; LS.set('fz_view', v); window.scrollTo(0, 0); render(); }
+function render(){
+  const p = me();
+  document.body.className = document.body.className.replace(/\bp-[CA]\b/g, '').trim() + ' p-' + p;
+  $('#whoBtn .chip').textContent = PEOPLE[p].name[0];
+  $('#whoBtn .n').textContent = PEOPLE[p].name;
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === VIEW));
+  const v = $('#view');
+  v.innerHTML = ({ heute: viewHeute, training: viewTraining, essen: viewEssen, einkauf: viewEinkauf, fortschritt: viewFortschritt }[VIEW] || viewHeute)();
+  if (VIEW === 'fortschritt') bindChart();
+}
+
+function weekStrip(){
+  const t = today(); const d0 = parseYmd(t); const dow = (d0.getDay() + 6) % 7; const mon = addDays(t, -dow);
+  let h = '<div class="week">';
+  for (let i = 0; i < 7; i++){
+    const d = addDays(mon, i); const wd = parseYmd(d).getDay();
+    const cls = ['d', isTrainDay(d) ? 'plan' : '', d === t ? 'today' : ''].join(' ');
+    h += `<div class="${cls}">${WD[wd]}<div class="dots">${trainedOn('C', d) ? '<i class="dot C"></i>' : ''}${trainedOn('A', d) ? '<i class="dot A"></i>' : ''}</div></div>`;
+  }
+  return h + '</div>';
+}
+
+function viewHeute(){
+  const p = me(), o = other(p), t = today(), wd = parseYmd(t).getDay(), s = settings();
+  const r = RECIPES[wd]; const st = trainStats(p); const b = bodyStats(p);
+  const w = water(p), wg = s.waterGoal; const done = trainedOn(p, t);
+  const glasses = Array.from({length: Math.max(wg, w)}, (_, i) => `<span class="glass ${i < w ? 'full' : ''}"></span>`).join('');
+  const hour = new Date().getHours(); const greet = hour < 11 ? 'Guten Morgen' : hour < 17 ? 'Hallo' : 'Guten Abend';
+  let trainCard;
+  if (done) trainCard = `<div class="row between"><div><div class="eyebrow">Training</div><h2 style="margin-top:4px">Heute erledigt ✓</h2></div><span class="pill ok">Stark!</span></div><p class="muted small" style="margin:8px 0 0">Aktuelle Serie: ${st.cur} ${st.cur === 1 ? 'Training' : 'Trainings'} in Folge.</p>`;
+  else if (isTrainDay(t)) trainCard = `<div class="eyebrow">Heute ist Trainingsabend</div><h2 style="margin:4px 0 2px">${PEOPLE[p].name}s Training</h2><p class="muted small" style="margin:0 0 12px">Woche ${trainWeek()} · ${currentSets()} Sätze · ca. ${Math.round(totalSec(buildSteps(p, {sets: currentSets()})) / 60)} Min.</p><button class="btn big block" data-act="startTraining">▶ Training starten</button>`;
+  else trainCard = `<div class="eyebrow">Ruhetag</div><h2 style="margin:4px 0 4px">Erholung gehört dazu</h2><p class="muted small" style="margin:0 0 10px">Nächstes Training: ${nextTrainLabel()}. Lust auf mehr? Du kannst trotzdem trainieren.</p><button class="btn ghost block" data-act="startTraining">Trotzdem trainieren</button>`;
+  return `
+  <div class="hello"><div class="muted small">${WDL[wd]}, ${fmtDate(t)}</div><h1>${greet}, ${esc(PEOPLE[p].name)}</h1></div>
+  <section class="card ${isTrainDay(t) && !done ? 'tint' : ''}">${trainCard}${weekStrip()}
+    <div class="legend"><span><i class="dot C"></i>Christoffer</span><span><i class="dot A"></i>Ariane</span><span class="faint">grau = Trainingstag</span></div></section>
+  <section class="card">
+    <div class="row between"><div><div class="eyebrow">Wasser</div><h2 class="num" style="margin-top:4px">${fmtNum(w*0.25)} von ${fmtNum(wg*0.25)} Liter</h2></div><span class="pill ${w >= wg ? 'ok' : ''}">${w}/${wg} Gläser</span></div>
+    <div class="glasses" aria-hidden="true">${glasses}</div>
+    <div class="water-ctrl"><button class="round" data-act="water" data-d="-1" aria-label="Glas entfernen">−</button><button class="btn block" data-act="water" data-d="1">+ Glas Wasser (250 ml)</button></div>
+  </section>
+  <section class="card">
+    <div class="eyebrow">Abendessen heute · 19 Uhr</div>
+    <div class="row between" style="margin-top:6px"><div class="grow"><h2>${esc(r.name)}</h2><div class="muted small">${esc(r.time)} · ${esc(r.work)}</div></div><button class="btn sm" data-act="recipe" data-wd="${wd}">Rezept & Timer</button></div>
+    <p class="small muted" style="margin:10px 0 0">Tagesziel: ca. ${fmtNum(PEOPLE[p].kcal,0)} kcal · ${PEOPLE[p].protein} g Eiweiß</p>
+  </section>
+  <section class="card">
+    <div class="row between"><div class="eyebrow">Gewicht</div><button class="btn sm soft" data-act="weightOpen">+ Eintragen</button></div>
+    <div class="stats"><div class="stat"><b>${fmtNum(b.cur)}</b><span>kg aktuell</span></div><div class="stat"><b>${b.lost > 0 ? '−' + fmtNum(b.lost) : '0'}</b><span>kg geschafft</span></div><div class="stat"><b>${fmtNum(b.toGo)}</b><span>kg bis ${fmtNum(b.goal)}</span></div></div>
+    <div class="bar" role="progressbar" aria-valuenow="${Math.round(b.pct*100)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.max(2, b.pct*100)}%"></i></div>
+  </section>
+  <section class="card">
+    <div class="eyebrow">${esc(PEOPLE[o].name)} heute</div>
+    <div class="row" style="margin-top:8px;gap:16px;flex-wrap:wrap">
+      <span class="row" style="gap:8px"><i class="dot ${o}"></i>${trainedOn(o, t) ? 'hat trainiert ✓' : isTrainDay(t) ? 'Training steht noch aus' : 'Ruhetag'}</span>
+      <span class="muted">💧 ${water(o)}/${wg} Gläser</span>
+      <span class="muted">🔥 Serie ${trainStats(o).cur}</span>
+    </div>
+  </section>`;
+}
+function nextTrainLabel(){
+  const t = today();
+  for (let i = 1; i <= 7; i++){ const d = addDays(t, i); if (isTrainDay(d)) return i === 1 ? 'morgen' : WDL[parseYmd(d).getDay()]; }
+  return '–';
+}
+
+/* --- Training --- */
+function buildSteps(p, opt = {}){
+  const sets = opt.sets || currentSets(); const full = sets >= 3; const spr = p === 'C' ? 3.5 : 3;
+  const steps = [{ kind:'prep', mode:'time', sec:10, name:'Gleich geht’s los', hint: p === 'C' ? 'Bremsen fest, Bänder und Manschetten bereit, Wasser in Reichweite.' : 'Vibrationsplatte, Bänder und Matte bereitlegen.', block:'Start' }];
+  for (const b of WORKOUTS[p]){
+    if (b.optional && opt.skipOpt) continue;
+    if (b.type === 'timed'){
+      b.items.forEach(it => steps.push({ kind:'work', mode:'time', sec:it.sec, name:it.name, hint:it.hint, block:b.title }));
+    } else if (b.type === 'interval'){
+      const n = full ? b.rounds.full : b.rounds.base;
+      steps.push({ kind:'prep', mode:'time', sec:b.prep, name:b.name, hint:b.hint, block:b.title });
+      for (let i = 0; i < n; i++){
+        steps.push({ kind:'work', mode:'time', sec:b.work, name:b.name, hint:b.hint, block:b.title, set:`Runde ${i+1} von ${n}` });
+        if (i < n-1) steps.push({ kind:'rest', mode:'time', sec:b.rest, name:'Pause', block:b.title });
+      }
+    } else if (b.type === 'circuit'){
+      const n = full ? b.rounds.full : b.rounds.base;
+      steps.push({ kind:'prep', mode:'time', sec:b.prep, name:b.stations[0].name, hint:b.stations[0].hint, block:b.title });
+      for (let r = 0; r < n; r++) b.stations.forEach((st, i) => {
+        steps.push({ kind:'work', mode:'time', sec:b.work, name:st.name, hint:st.hint, block:b.title, set:`Runde ${r+1}/${n} · Station ${i+1}/${b.stations.length}` });
+        if (!(r === n-1 && i === b.stations.length-1)) steps.push({ kind:'rest', mode:'time', sec:b.rest, name:'Kurz lockern', block:b.title });
+      });
+    } else if (b.type === 'reps'){
+      const ns = b.fixedSets || sets;
+      b.items.forEach(it => {
+        steps.push({ kind:'prep', mode:'time', sec:b.prep, name:it.name, hint:it.hint, block:b.title, optional: !!b.optional });
+        for (let s = 0; s < ns; s++){
+          const lbl = `Satz ${s+1} von ${ns}`;
+          if (it.sec){
+            if (it.perSide){
+              steps.push({ kind:'work', mode:'time', sec:it.sec, name:it.name + ' links', hint:it.hint, block:b.title, set:lbl, optional: !!b.optional });
+              steps.push({ kind:'work', mode:'time', sec:it.sec, name:it.name + ' rechts', hint:it.hint, block:b.title, set:lbl, optional: !!b.optional });
+            } else steps.push({ kind:'work', mode:'time', sec:it.sec, name:it.name, hint:it.hint, block:b.title, set:lbl, optional: !!b.optional });
+          } else {
+            const reps = it.perSide ? it.reps * 2 : it.reps;
+            steps.push({ kind:'work', mode:'reps', reps:it.reps, perSide: !!it.perSide, sec: Math.round(reps * spr + 4), name:it.name, hint:it.hint, block:b.title, set:lbl, optional: !!b.optional });
+          }
+          if (s < ns-1) steps.push({ kind:'rest', mode:'time', sec:b.rest, name:'Pause', block:b.title, optional: !!b.optional });
+        }
+      });
+    }
+  }
+  return steps;
+}
+const totalSec = steps => steps.reduce((s, x) => s + (x.sec || 0), 0);
+
+function viewTraining(){
+  const p = me(); const sets = currentSets(); const st = trainStats(p); const ost = trainStats(other(p));
+  const stepsAll = buildSteps(p, { sets }); const stepsShort = buildSteps(p, { sets, skipOpt: true });
+  const hasOpt = WORKOUTS[p].some(b => b.optional);
+  let blocks = '';
+  WORKOUTS[p].forEach(b => {
+    let items = '';
+    if (b.type === 'timed') items = b.items.map(it => `<li><span class="ex-n">${it.sec/60}′</span><div class="grow"><b>${esc(it.name)}</b><div class="small muted">${esc(it.hint)}</div></div></li>`).join('');
+    else if (b.type === 'interval'){ const n = sets >= 3 ? b.rounds.full : b.rounds.base; items = `<li><span class="ex-n">${n}×</span><div class="grow"><b>${esc(b.name)}</b> <span class="muted small">${b.work >= 60 ? (b.work/60) + ' Min.' : b.work + ' s'} · ${b.rest} s Pause</span><div class="small muted">${esc(b.hint)}</div></div></li>`; }
+    else if (b.type === 'circuit'){ const n = sets >= 3 ? b.rounds.full : b.rounds.base; items = b.stations.map(s2 => `<li><span class="ex-n">${b.work}s</span><div class="grow"><b>${esc(s2.name)}</b><div class="small muted">${esc(s2.hint)}</div></div></li>`).join('') + `<li><span class="ex-n">${n}×</span><div class="grow small muted">${n === 1 ? 'Eine Runde' : n + ' Runden'}, je ${b.rest} s Pause zwischen den Stationen</div></li>`; }
+    else items = b.items.map(it => `<li><span class="ex-n">${b.fixedSets || sets}×</span><div class="grow"><b>${esc(it.name)}</b> <span class="muted small">${it.sec ? it.sec + ' s' : it.reps + ' Wdh.'}${it.perSide ? ' je Seite' : ''}</span><div class="small muted">${esc(it.hint)}</div></div></li>`).join('');
+    blocks += `<div class="block-title">${esc(b.title)}${b.optional ? ' <span class="pill">optional</span>' : ''}</div><ul class="list">${items}</ul>`;
+  });
+  const safety = p === 'C'
+    ? `<div class="note" style="margin-top:12px"><b>Sicherheit:</b> Raum warm halten, langsam aufwärmen. Bei Kopfschmerz, Schwitzen, Gänsehaut oder Herzrasen sofort stoppen, aufrecht sitzen, Blase und enge Kleidung prüfen. Kalorienziel und Training bitte mit Arzt abstimmen.</div>`
+    : `<div class="note" style="margin-top:12px">Vibrationsplatte: Knie nie ganz durchstrecken, Bauch fest. Bei Schwindel aussteigen.</div>`;
+  return `
+  <section class="card tint">
+    <div class="eyebrow">Woche ${trainWeek()} · ${sets} Sätze${settings().setsOverride ? ' (fest eingestellt)' : (trainWeek() <= 2 ? ' · ab Woche 3: 3 Sätze' : '')}</div>
+    <h2 style="margin:4px 0 2px">${esc(PEOPLE[p].name)}s Abendtraining</h2>
+    <p class="muted small" style="margin:0 0 12px">ca. ${Math.round(totalSec(stepsAll)/60)} Min.${hasOpt ? ` · ohne Beinblock ca. ${Math.round(totalSec(stepsShort)/60)} Min.` : ''} · ${LOC.handsfree ? 'Freihändig: läuft automatisch weiter' : 'Wiederholungen per Tipp bestätigen'}</p>
+    <button class="btn big block" data-act="startTraining">▶ Training starten</button>
+    ${hasOpt ? `<button class="btn ghost block" style="margin-top:8px" data-act="startTraining" data-skip="1">Ohne Beinblock starten</button>` : ''}
+  </section>
+  <section class="card">
+    <div class="row between"><h2>Kalender</h2><div class="row" style="gap:6px"><button class="icon-btn" data-act="calNav" data-d="-1" aria-label="Vormonat">‹</button><button class="icon-btn" data-act="calNav" data-d="1" aria-label="Nächster Monat">›</button></div></div>
+    ${calendar()}
+    <div class="legend"><span><i class="dot C"></i>Christoffer</span><span><i class="dot A"></i>Ariane</span><span class="faint">grau = Trainingstag</span></div>
+    <div class="stats"><div class="stat"><b>${st.cur}</b><span>Serie jetzt</span></div><div class="stat"><b>${st.best}</b><span>beste Serie</span></div><div class="stat"><b>${st.count}</b><span>Trainings</span></div></div>
+    <p class="tiny faint" style="margin:8px 0 0">Serie = Trainings in Folge ohne Pause über 3 Tage. ${esc(PEOPLE[other(p)].name)}: Serie ${ost.cur}, ${ost.count} Trainings.</p>
+  </section>
+  <details class="card" open><summary>Übungen im Überblick</summary>${blocks}${safety}</details>
+  ${historyHtml(p)}`;
+}
+function historyHtml(p){
+  const t = trainings(p).slice(-8).reverse();
+  if (!t.length) return '';
+  return `<details class="card"><summary>Letzte Trainings</summary><ul class="list" style="margin-top:6px">${t.map(x => `<li><span class="ex-n">✓</span><div class="grow"><b>${WD[parseYmd(x.date).getDay()]}, ${fmtDate(x.date)}</b><div class="small muted">${x.min} Min. · ${x.sets} Sätze${x.skipOpt ? ' · ohne Beine' : ''}${x.partial ? ' · vorzeitig beendet' : ''}</div></div></li>`).join('')}</ul></details>`;
+}
+function calendar(){
+  const t = today(); if (!CAL_M) CAL_M = t.slice(0, 7);
+  const [y, m] = CAL_M.split('-').map(Number); const first = new Date(y, m-1, 1); const days = new Date(y, m, 0).getDate();
+  const off = (first.getDay() + 6) % 7;
+  let h = `<div class="muted small" style="margin-top:4px;font-weight:650">${MON[m-1]} ${y}</div><div class="cal">` + ['Mo','Di','Mi','Do','Fr','Sa','So'].map(d => `<div class="h">${d}</div>`).join('');
+  for (let i = 0; i < off; i++) h += '<div class="c out"></div>';
+  for (let d = 1; d <= days; d++){
+    const ds = `${y}-${pad2(m)}-${pad2(d)}`;
+    h += `<div class="c ${isTrainDay(ds) ? 'plan' : ''} ${ds === t ? 'today' : ''}"><span class="num">${d}</span><span class="dots">${trainedOn('C', ds) ? '<i class="dot C"></i>' : ''}${trainedOn('A', ds) ? '<i class="dot A"></i>' : ''}</span></div>`;
+  }
+  return h + '</div>';
+}
+
+/* --- Trainings-Player --- */
+const PL = { steps: [], i: 0, endAt: 0, remainMs: 0, running: false, started: 0, timer: null, skipOpt: false, sets: 2, lastBeep: null, finished: false };
+function startWorkout(skipOpt){
+  unlockAudio();
+  const p = me();
+  PL.p = p; PL.sets = currentSets(); PL.skipOpt = !!skipOpt; PL.steps = buildSteps(p, { sets: PL.sets, skipOpt }); PL.started = Date.now(); PL.finished = false;
+  $('#player').classList.remove('hidden'); document.body.classList.add('noscroll');
+  wakeLock(true);
+  clearInterval(PL.timer); PL.timer = setInterval(plTick, 200);
+  goStep(0);
+}
+const stepTimed = s => s.mode === 'time' || (s.mode === 'reps' && LOC.handsfree);
+function goStep(i){
+  if (i < 0) i = 0;
+  PL.i = i; const s = PL.steps[i];
+  if (!s) return finishWorkout(false);
+  PL.remainMs = s.sec * 1000; PL.endAt = Date.now() + PL.remainMs; PL.running = true; PL.lastBeep = null;
+  if (s.kind === 'work'){ beep(880, .18); vibrate(120); }
+  else if (s.kind === 'rest'){ beep(523, .2); vibrate([60,60,60]); }
+  const nxt = nextWork(i);
+  if (s.kind === 'work') say(s.mode === 'reps' ? `${s.name}. ${s.reps} Wiederholungen${s.perSide ? ' je Seite' : ''}.` : `${s.name}. ${s.sec >= 60 ? (s.sec/60) + (s.sec === 60 ? ' Minute' : ' Minuten') : s.sec + ' Sekunden'}.`);
+  else if (s.kind === 'rest') say(`Pause. ${nxt ? 'Als Nächstes: ' + nxt.name : ''}`);
+  else say(`${i === 0 ? 'Los geht’s gleich. ' : ''}Vorbereiten: ${s.name}.`);
+  renderPlayer();
+}
+function nextWork(i){ for (let j = i+1; j < PL.steps.length; j++) if (PL.steps[j].kind === 'work') return PL.steps[j]; return null; }
+function plTick(){
+  if (PL.finished) return;
+  const s = PL.steps[PL.i]; if (!s || !PL.running || !stepTimed(s)) return;
+  const ms = PL.endAt - Date.now(); const rem = Math.max(0, Math.ceil(ms / 1000));
+  if (rem <= 3 && rem > 0 && PL.lastBeep !== rem){ PL.lastBeep = rem; beep(660, .08); }
+  updatePlayerTime(ms);
+  if (ms <= 0) goStep(PL.i + 1);
+}
+function updatePlayerTime(ms){
+  const s = PL.steps[PL.i]; if (!s) return;
+  const el = $('#plTime'); const fg = $('#plRing');
+  if (!el) return;
+  if (!stepTimed(s)){ el.textContent = s.reps; return; }
+  const left = ms != null ? ms : PL.remainMs;
+  el.textContent = fmtClock(Math.max(0, Math.ceil(left / 1000)));
+  if (fg){ const C = 2 * Math.PI * 88; fg.style.strokeDashoffset = String(C * (1 - clamp(left / (s.sec * 1000), 0, 1))); }
+}
+function renderPlayer(){
+  const s = PL.steps[PL.i]; if (!s) return;
+  const el = $('#player'); el.className = 'player ' + s.kind;
+  const nxt = nextWork(PL.i); const C = 2 * Math.PI * 88;
+  const kind = { work:'Übung', rest:'Pause', prep:'Vorbereiten' }[s.kind];
+  const timed = stepTimed(s);
+  const sub = s.mode === 'reps' ? (s.perSide ? 'Wdh. je Seite' : 'Wiederholungen') : (s.kind === 'work' ? 'Sekunden' : '');
+  const optional = s.optional && PL.steps.some((x, j) => j > PL.i && !x.optional);
+  el.innerHTML = `
+    <div class="ptop"><button class="icon-btn" data-act="pClose" aria-label="Training beenden">✕</button><div class="pblock">${esc(s.block)}</div><span class="pill num">${PL.i+1}/${PL.steps.length}</span></div>
+    <div class="pprog"><i style="width:${(PL.i / PL.steps.length) * 100}%"></i></div>
+    <div class="pmain">
+      <div class="kind">${kind}</div>
+      <div class="pname">${esc(s.name)}</div>
+      ${s.set ? `<div class="pset">${esc(s.set)}</div>` : ''}
+      <div class="ring"><svg viewBox="0 0 200 200"><circle class="bg" cx="100" cy="100" r="88"/><circle class="fg" id="plRing" cx="100" cy="100" r="88" stroke-dasharray="${C}" stroke-dashoffset="0"/></svg>
+        <div class="center"><div class="time" id="plTime">${s.mode === 'reps' && !timed ? s.reps : fmtClock(Math.ceil(PL.remainMs/1000))}</div>${s.mode === 'reps' ? `<div class="sub">${s.reps} ${sub}</div>` : ''}</div></div>
+      <div class="phint">${esc(s.hint || (s.kind === 'rest' && nxt ? 'Durchatmen, trinken, Band umgreifen.' : ''))}</div>
+      <div class="pnext">${nxt ? 'Als Nächstes: ' + (s.kind === 'work' && nxt.name === s.name && nxt.set ? esc(nxt.set) : esc(nxt.name) + (nxt.mode === 'reps' ? ` · ${nxt.reps} Wdh.` : '')) : (s.kind === 'work' ? 'Letzte Übung!' : '')}</div>
+    </div>
+    ${s.mode === 'reps' ? `<button class="btn big block pdone" data-act="pNext">✓ Satz fertig</button>` : ''}
+    ${optional ? `<button class="btn ghost block" style="margin-top:8px" data-act="pSkipBlock">Beinblock überspringen</button>` : ''}
+    <div class="pctrl">
+      <button class="round" data-act="pPrev" aria-label="Zurück"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+      <button class="round play" data-act="pPause" aria-label="${PL.running ? 'Pause' : 'Weiter'}" ${timed ? '' : 'disabled style="opacity:.35"'}>${PL.running || !timed ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>' : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>'}</button>
+      <button class="round" data-act="pNext" aria-label="Überspringen"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+    </div>`;
+  updatePlayerTime();
+}
+function plPause(){
+  const s = PL.steps[PL.i]; if (!s || !stepTimed(s)) return;
+  if (PL.running){ PL.remainMs = Math.max(0, PL.endAt - Date.now()); PL.running = false; say('Pause'); }
+  else { PL.endAt = Date.now() + PL.remainMs; PL.running = true; }
+  renderPlayer();
+}
+function plSkipBlock(){ let j = PL.i; while (j < PL.steps.length && PL.steps[j].optional) j++; goStep(j); }
+async function plClose(){
+  const wasRunning = PL.running; if (PL.running) plPause();
+  const min = Math.max(1, Math.round((Date.now() - PL.started) / 60000));
+  const v = await ask('Training beenden?', `Du bist seit ${min} Min. dabei.`, [
+    { label:'Weiter trainieren', value:'cont' },
+    { label:'Speichern & beenden', value:'save', cls:'soft' },
+    { label:'Verwerfen', value:'drop', cls:'danger' }
+  ]);
+  if (v === 'save') finishWorkout(true);
+  else if (v === 'drop') stopPlayer();
+  else if (wasRunning) plPause();
+}
+function stopPlayer(){
+  clearInterval(PL.timer); PL.finished = true; wakeLock(false);
+  try { speechSynthesis.cancel(); } catch(e){}
+  $('#player').classList.add('hidden'); $('#player').innerHTML = ''; document.body.classList.remove('noscroll');
+  render();
+}
+function finishWorkout(partial){
+  clearInterval(PL.timer); PL.finished = true; wakeLock(false);
+  const p = PL.p; const min = Math.max(1, Math.round((Date.now() - PL.started) / 60000)); const d = today(); const ts = Date.now();
+  put(`train|${p}|${d}|${ts}`, { p, date: d, ts, min, sets: PL.sets, skipOpt: PL.skipOpt, partial: !!partial });
+  const st = trainStats(p);
+  beep(784, .15); setTimeout(() => beep(988, .15), 160); setTimeout(() => beep(1318, .3), 330); vibrate([200,100,200]);
+  say(partial ? 'Gut gemacht. Training gespeichert.' : 'Geschafft! Super Training.');
+  confetti();
+  $('#player').className = 'player';
+  $('#player').innerHTML = `<div class="finish"><div class="big">${partial ? '👍' : '🎉'}</div><h1>${partial ? 'Gut gemacht!' : 'Geschafft!'}</h1>
+    <p class="muted" style="margin:0">${min} Minuten Training gespeichert.</p>
+    <div class="stats" style="width:100%;max-width:380px"><div class="stat"><b>${st.cur}</b><span>Serie</span></div><div class="stat"><b>${st.count}</b><span>Trainings</span></div><div class="stat"><b>${st.minutes}</b><span>Minuten gesamt</span></div></div>
+    <p class="small muted" style="max-width:340px">Jetzt ein großes Glas Wasser trinken.</p>
+    <button class="btn big block" style="max-width:380px" data-act="pEnd">Fertig</button>
+    <button class="btn ghost block" style="max-width:380px" data-act="pEndWater">Fertig + Glas Wasser 💧</button></div>`;
+  setTimeout(checkBadges, 600);
+}
+
+/* --- Essen --- */
+function viewEssen(){
+  const p = me(); const wdT = parseYmd(today()).getDay(); const dp = DAYPLAN[p];
+  return `
+  <section class="card tint"><div class="eyebrow">${esc(PEOPLE[p].name)}s Tag</div><h2 style="margin:4px 0 6px">ca. ${fmtNum(PEOPLE[p].kcal,0)} kcal · ${PEOPLE[p].protein} g Eiweiß</h2>
+    ${dp.meals.map(m => `<div class="meal"><b>${esc(m[0])}</b><div><b>${esc(m[1])}</b><div class="small muted">${esc(m[2])}</div></div></div>`).join('')}
+  </section>
+  <section><div class="row between" style="margin:6px 2px 8px"><h2>Abendessen der Woche</h2><span class="pill">Faulenzer-Rezepte</span></div>
+    ${WEEK_ORDER.map(wd => { const r = RECIPES[wd]; return `<button class="day ${wd === wdT ? 'today' : ''}" data-act="recipe" data-wd="${wd}"><span class="wd">${WD[wd]}</span><span class="grow"><b>${esc(r.name)}</b><span class="small muted" style="display:block">${esc(r.time)} · ${esc(r.work)}</span></span><span class="muted">›</span></button>`; }).join('')}
+  </section>
+  <details class="card"><summary>Tipps für ${esc(PEOPLE[p].name)}</summary><ul class="ingr">${dp.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul></details>
+  <details class="card"><summary>Vorrat für spontane Abende</summary><p class="small muted" style="margin:8px 0 0">TK-Gemüse, Express-Reis, Nudeln, passierte Tomaten, TK-Lachs und Frischkäse light immer im Haus – dann geht jedes Gericht ohne Planung.</p></details>`;
+}
+function openRecipe(wd){
+  const r = RECIPES[wd];
+  openSheet(`<div class="sheet-head"><div><div class="eyebrow">${WDL[wd]}</div><h2>${esc(r.name)}</h2></div><button class="icon-btn" data-act="sheetClose" aria-label="Schließen">✕</button></div>
+    <div class="row" style="gap:6px;flex-wrap:wrap"><span class="pill">⏱ ${esc(r.time)}</span><span class="pill">${esc(r.work)}</span><span class="pill">2 Personen</span></div>
+    <div class="card" style="margin-top:12px"><h3>Zutaten</h3><ul class="ingr">${r.ingr.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div>
+    <div class="card" style="margin-top:12px"><h3>So geht’s</h3><ol class="steps">${r.steps.map(s => `<li>${esc(s.t)}${s.min ? `<div><button class="btn sm" data-act="kt" data-min="${s.min}" data-label="${esc(s.l || r.name)}">⏱ Timer ${s.min} Min.</button></div>` : ''}</li>`).join('')}</ol></div>`);
+}
+
+/* --- Küchentimer --- */
+let KT = LS.get('fz_kt', []);
+let ktInt = null;
+function ktSave(){ LS.set('fz_kt', KT); }
+function ktStart(min, label){
+  unlockAudio();
+  KT.push({ id: uid(), label, endAt: Date.now() + min * 60000, done: false }); ktSave(); ktLoop(); renderTimers();
+  wakeLock(true);
+  toast(`⏱ Timer „${label}“ läuft – ${min} Min.`);
+  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {});
+}
+function ktLoop(){
+  clearInterval(ktInt);
+  if (!KT.length){ if (!$('#player').classList.contains('hidden')) return; wakeLock(false); return; }
+  ktInt = setInterval(() => {
+    let ring = false;
+    KT.forEach(t => { if (!t.done && Date.now() >= t.endAt){ t.done = true; ring = true; notify('⏰ Fertig: ' + t.label, 'Der Küchentimer ist abgelaufen.'); say('Timer fertig: ' + t.label); } });
+    if (KT.some(t => t.done)){ beep(1046, .25, .35); vibrate([300,150,300]); }
+    if (ring) ktSave();
+    renderTimers();
+  }, 1000);
+}
+function renderTimers(){
+  const box = $('#timers');
+  box.innerHTML = KT.map(t => { const left = Math.max(0, Math.ceil((t.endAt - Date.now()) / 1000));
+    return `<div class="kt ${t.done ? 'done' : ''}"><b>${t.done ? '⏰' : fmtClock(left)}</b><span class="l">${t.done ? 'Fertig: ' : ''}${esc(t.label)}</span>${t.done ? '' : `<button data-act="ktAdd" data-id="${t.id}">+1 Min.</button>`}<button data-act="ktStop" data-id="${t.id}">${t.done ? 'OK' : '✕'}</button></div>`; }).join('');
+}
+
+/* --- Einkauf --- */
+function shopState(id){ return !!(get('shop|' + id) || {}).c; }
+function viewEinkauf(){
+  const custom = list('shopx|').map(r => Object.assign({ k: r.k }, r.d));
+  let total = 0, done = 0, html = '';
+  SHOP.forEach(([cat, items]) => {
+    const rows = items.map(([id, name, q]) => ({ k: 'shop|' + id, name, q, c: shopState(id) }))
+      .concat(custom.filter(c => c.cat === cat).map(c => ({ k: c.k, name: c.name, q: c.q || '', c: !!c.c, custom: true })));
+    total += rows.length; done += rows.filter(r => r.c).length;
+    const vis = HIDE_DONE ? rows.filter(r => !r.c) : rows;
+    if (!vis.length) return;
+    html += `<div class="shop-cat"><h3>${esc(cat)}</h3>${vis.map(r => `<div class="item ${r.c ? 'on' : ''}" data-act="shopToggle" data-k="${esc(r.k)}" role="checkbox" aria-checked="${r.c}" tabindex="0"><span class="box"></span><span class="t">${esc(r.name)}</span><span class="q">${esc(r.q)}</span>${r.custom ? `<button class="del" data-act="shopDel" data-k="${esc(r.k)}" aria-label="Löschen">✕</button>` : ''}</div>`).join('')}</div>`;
+  });
+  return `
+  <section class="card tint"><div class="row between"><div><div class="eyebrow">Rewe · Wocheneinkauf</div><h2 class="num" style="margin-top:4px">${done} von ${total} im Wagen</h2></div><span class="pill ${done === total && total ? 'ok' : ''}">${total ? Math.round(done/total*100) : 0} %</span></div>
+    <div class="bar"><i style="width:${total ? Math.max(2, done/total*100) : 0}%"></i></div>
+    <div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap"><button class="btn sm soft" data-act="shopHide">${HIDE_DONE ? 'Erledigte zeigen' : 'Erledigte ausblenden'}</button><button class="btn sm ghost" data-act="shopReset">Neue Woche: alle Haken weg</button></div>
+    <p class="tiny muted" style="margin:10px 0 0">Ihr seht beide dieselbe Liste – abgehakt wird live für euch beide.</p></section>
+  ${html || '<div class="empty">Alles erledigt 🎉</div>'}
+  <section class="card"><h3>Etwas hinzufügen</h3>
+    <div class="add"><input type="text" id="shopName" placeholder="z. B. Bananen" aria-label="Artikel" enterkeyhint="done"><input type="text" id="shopQ" placeholder="Menge" aria-label="Menge" style="max-width:90px"></div>
+    <div class="add"><select id="shopCat" aria-label="Abteilung">${SHOP_CATS.map(c => `<option>${esc(c)}</option>`).join('')}</select><button class="btn" data-act="shopAdd">Hinzufügen</button></div>
+  </section>`;
+}
+
+/* --- Fortschritt --- */
+function viewFortschritt(){
+  const p = PROG_P || me(); const b = bodyStats(p); const got = earned(p);
+  const pts = CHART_M === 'kg' ? b.kg.map(r => ({ date: r.date, v: r.kg })) : b.wa.map(r => ({ date: r.date, v: r.waist }));
+  if (CHART_M === 'kg' && !b.kg.length) pts.unshift({ date: settings().start, v: b.startKg, start: true });
+  return `
+  <div class="row between"><div class="seg" role="tablist">${['C','A'].map(x => `<button class="${x === p ? 'on' : ''}" data-act="progP" data-p="${x}"><i class="dot ${x}"></i> ${esc(PEOPLE[x].name)}</button>`).join('')}</div>
+    <button class="btn sm" data-act="weightOpen" data-p="${p}">+ Eintrag</button></div>
+  <section class="card">
+    <div class="eyebrow">Weg zum Ziel · ${fmtNum(b.startKg)} → ${fmtNum(b.goal)} kg</div>
+    <div class="stats"><div class="stat"><b>${fmtNum(b.cur)}</b><span>kg aktuell</span></div><div class="stat"><b>${b.lost > 0 ? '−' + fmtNum(b.lost) : '0'}</b><span>kg geschafft</span></div><div class="stat"><b>${Math.round(b.pct*100)} %</b><span>vom Weg</span></div></div>
+    <div class="bar" style="--me:var(--${p})"><i style="width:${Math.max(2, b.pct*100)}%;background:var(--${p})"></i></div>
+    ${b.waistCur ? `<p class="small muted" style="margin:10px 0 0">Bauchumfang: ${fmtNum(b.waistCur)} cm${b.waistLost > 0 ? ` · −${fmtNum(b.waistLost)} cm seit dem ersten Messen` : ''}</p>` : ''}
+  </section>
+  <section class="card">
+    <div class="row between"><h2>${CHART_M === 'kg' ? 'Gewicht' : 'Bauchumfang'}</h2><div class="seg"><button class="${CHART_M === 'kg' ? 'on' : ''}" data-act="chartM" data-m="kg">kg</button><button class="${CHART_M === 'cm' ? 'on' : ''}" data-act="chartM" data-m="cm">cm</button></div></div>
+    ${chartHtml(pts, CHART_M === 'kg' ? b.goal : null, CHART_M === 'kg' ? 'kg' : 'cm', p)}
+  </section>
+  <section class="card"><div class="row between"><h2>Abzeichen</h2><span class="pill me">${got.length}/${BADGES.length}</span></div>
+    <div class="badges">${BADGES.map(x => `<div class="badge ${got.includes(x.id) ? 'got' : ''}"><div class="ic">${x.ic}</div><b>${esc(x.t)}</b><span>${esc(x.d)}</span></div>`).join('')}</div></section>
+  ${b.rows.length ? `<details class="card"><summary>Alle Einträge (${b.rows.length})</summary><ul class="list" style="margin-top:6px">${b.rows.slice().reverse().map(r => `<li><div class="grow"><b>${fmtDate(r.date)}${r.date.slice(0,4) !== today().slice(0,4) ? r.date.slice(0,4) : ''}</b><div class="small muted">${r.kg ? fmtNum(r.kg) + ' kg' : ''}${r.kg && r.waist ? ' · ' : ''}${r.waist ? fmtNum(r.waist) + ' cm Bauch' : ''}</div></div><button class="btn sm ghost" data-act="bodyDel" data-k="${esc(r.k)}">Löschen</button></li>`).join('')}</ul></details>` : ''}`;
+}
+let CH = null;
+function chartHtml(pts, goal, unit, p){
+  CH = null;
+  if (!pts.length) return `<div class="empty">Noch keine Werte. Miss den Bauchumfang auf Nabelhöhe, morgens, entspannt ausgeatmet.</div>`;
+  const W = 340, H = 210, L = 38, R = 14, T = 16, B = 26;
+  const xs = pts.map(q => parseYmd(q.date).getTime());
+  let x0 = Math.min(...xs), x1 = Math.max(...xs); if (x1 - x0 < 6*86400000){ x0 -= 3*86400000; x1 += 3*86400000; }
+  const vals = pts.map(q => q.v).concat(goal ? [goal] : []);
+  let y0 = Math.floor(Math.min(...vals) - 1), y1 = Math.ceil(Math.max(...vals) + 1);
+  const span = y1 - y0; const step = span > 24 ? 5 : span > 10 ? 2 : 1;
+  y0 = Math.floor(y0 / step) * step; y1 = Math.ceil(y1 / step) * step;
+  const X = t => L + (t - x0) / (x1 - x0) * (W - L - R);
+  const Y = v => T + (y1 - v) / (y1 - y0) * (H - T - B);
+  let grid = '', ax = '';
+  for (let v = y0; v <= y1; v += step){ grid += `<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}"/>`; ax += `<text x="${L-6}" y="${Y(v)+4}" text-anchor="end">${v}</text>`; }
+  ax += `<text x="${L}" y="${H-6}">${fmtDate(ymd(new Date(x0)))}</text><text x="${W-R}" y="${H-6}" text-anchor="end">${fmtDate(ymd(new Date(x1)))}</text>`;
+  const color = `var(--${p})`;
+  const path = pts.map((q, i) => `${i ? 'L' : 'M'}${X(xs[i]).toFixed(1)},${Y(q.v).toFixed(1)}`).join('');
+  const goalEl = goal ? `<g class="goal"><line x1="${L}" x2="${W-R}" y1="${Y(goal)}" y2="${Y(goal)}"/><text x="${W-R}" y="${Y(goal)-6}" text-anchor="end">Ziel ${fmtNum(goal)} ${unit}</text></g>` : '';
+  const dots = pts.map((q, i) => `<circle cx="${X(xs[i]).toFixed(1)}" cy="${Y(q.v).toFixed(1)}" r="4.5" fill="${color}" stroke="var(--card)" stroke-width="2"/>`).join('');
+  CH = { pts: pts.map((q, i) => ({ x: X(xs[i]), y: Y(q.v), label: `${fmtDate(q.date)} · ${fmtNum(q.v)} ${unit}${q.start ? ' (Start)' : ''}` })), W, H, T, B };
+  return `<div class="chart" id="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${unit === 'kg' ? 'Gewichtsverlauf' : 'Bauchumfang'}"><g class="grid">${grid}</g><g class="axis">${ax}</g>${goalEl}
+    <line id="chX" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke="var(--faint)" stroke-width="1" opacity="0"/>
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}</svg><div class="tip" id="chTip"></div></div>
+    ${pts.length === 1 && pts[0].start ? '<p class="small muted" style="margin:6px 0 0">Startwert – trag einmal pro Woche dein Gewicht ein, am besten morgens.</p>' : ''}`;
+}
+function bindChart(){
+  const c = $('#chart'); if (!c || !CH) return;
+  const svg = c.querySelector('svg'), tip = $('#chTip'), cx = $('#chX');
+  const show = e => {
+    const r = svg.getBoundingClientRect(); const sx = (e.clientX - r.left) / r.width * CH.W;
+    let best = CH.pts[0]; CH.pts.forEach(q => { if (Math.abs(q.x - sx) < Math.abs(best.x - sx)) best = q; });
+    cx.setAttribute('x1', best.x); cx.setAttribute('x2', best.x); cx.setAttribute('opacity', '1');
+    tip.textContent = best.label; tip.style.left = (best.x / CH.W * r.width) + 'px'; tip.style.top = (best.y / CH.H * r.height) + 'px'; tip.classList.add('on');
+  };
+  const hide = () => { tip.classList.remove('on'); cx.setAttribute('opacity', '0'); };
+  svg.addEventListener('pointermove', show); svg.addEventListener('pointerdown', show); svg.addEventListener('pointerleave', hide);
+}
+function openWeight(p){
+  p = p || me(); const b = bodyStats(p); const t = today(); const ex = get(`body|${p}|${t}`) || {};
+  openSheet(`<div class="sheet-head"><h2>Messung eintragen</h2><button class="icon-btn" data-act="sheetClose" aria-label="Schließen">✕</button></div>
+    <div class="seg" style="margin-top:4px">${['C','A'].map(x => `<button class="${x === p ? 'on' : ''}" data-act="weightOpen" data-p="${x}">${esc(PEOPLE[x].name)}</button>`).join('')}</div>
+    <label class="field"><span>Datum</span><input type="date" id="wDate" value="${t}" max="${t}"></label>
+    <div class="grid2"><label class="field"><span>Gewicht (kg)</span><input type="text" id="wKg" inputmode="decimal" autocomplete="off" placeholder="${fmtNum(b.cur)}" value="${ex.kg ? fmtNum(ex.kg) : ''}"></label>
+    <label class="field"><span>Bauchumfang (cm, optional)</span><input type="text" id="wWaist" inputmode="decimal" autocomplete="off" placeholder="${b.waistCur ? fmtNum(b.waistCur) : 'z. B. 110'}" value="${ex.waist ? fmtNum(ex.waist) : ''}"></label></div>
+    <p class="tiny muted">Tipp: einmal pro Woche, morgens nach dem Aufstehen. Bauch auf Nabelhöhe messen.</p>
+    <button class="btn big block" style="margin-top:8px" data-act="weightSave" data-p="${p}">Speichern</button>`);
+}
+
+/* =========================================================
+   Einstellungen
+   ========================================================= */
+function syncInfoHtml(){
+  if (!DB.cfg.url) return '<span class="muted">Nicht verbunden – Daten bleiben nur auf diesem Gerät.</span>';
+  const when = DB.lastSync ? new Date(DB.lastSync).toLocaleString('de-DE', { dateStyle:'short', timeStyle:'short' }) : 'noch nie';
+  const st = { ok:'✓ Verbunden', busy:'Synchronisiere …', err:'⚠ ' + esc(syncMsg), off:'Nicht verbunden' }[syncState] || '';
+  return `${st} · zuletzt: ${when}${DB.dirty.size ? ` · ${DB.dirty.size} offen` : ''}`;
+}
+function openSettings(){
+  const s = settings(), p = me();
+  openSheet(`<div class="sheet-head"><h2>Einstellungen</h2><button class="icon-btn" data-act="sheetClose" aria-label="Schließen">✕</button></div>
+  <div class="card"><h3>Wer nutzt dieses Handy?</h3><div class="seg" style="margin-top:10px">${['C','A'].map(x => `<button class="${x === p ? 'on' : ''}" data-act="setme" data-p="${x}">${esc(PEOPLE[x].name)}</button>`).join('')}</div></div>
+
+  <div class="card" style="margin-top:12px"><h3>Gemeinsamer Abgleich (Google-Tabelle)</h3>
+    <p class="small muted" id="setSyncInfo" style="margin:6px 0 0">${syncInfoHtml()}</p>
+    <label class="field"><span>Web-App-URL aus Apps Script (endet auf /exec)</span><input type="url" id="cfgUrl" value="${esc(DB.cfg.url)}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"></label>
+    <label class="field"><span>Zugangscode</span><input type="password" id="cfgCode" value="${esc(DB.cfg.code)}" autocomplete="off"></label>
+    <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn sm" data-act="saveSync">Speichern & testen</button><button class="btn sm soft" data-act="shareLink" ${DB.cfg.url ? '' : 'disabled'}>Link für ${esc(PEOPLE[other(p)].name)} teilen</button></div>
+    <p class="tiny muted" style="margin:10px 0 0">Der Link enthält URL und Zugangscode – nur an ${esc(PEOPLE[other(p)].name)} schicken. Einmal öffnen, fertig verbunden.</p>
+  </div>
+
+  <div class="card" style="margin-top:12px"><h3>Trainingsplan (gilt für beide)</h3>
+    <div class="field"><span>Trainingstage</span><div class="daypick">${[1,2,3,4,5,6,0].map(d => `<button class="${s.days.includes(d) ? 'on' : ''}" data-act="toggleDay" data-d="${d}">${WD[d]}</button>`).join('')}</div></div>
+    <div class="grid2"><label class="field"><span>Uhrzeit</span><input type="time" id="setTime" value="${s.time}"></label>
+    <label class="field"><span>Start (Woche 1)</span><input type="date" id="setStart" value="${s.start}"></label></div>
+    <label class="field"><span>Sätze</span><select id="setSets"><option value="0" ${!s.setsOverride ? 'selected' : ''}>Automatisch (Woche 1–2: 2, danach 3)</option><option value="2" ${s.setsOverride === 2 ? 'selected' : ''}>Immer 2</option><option value="3" ${s.setsOverride === 3 ? 'selected' : ''}>Immer 3</option></select></label>
+  </div>
+
+  <div class="card" style="margin-top:12px"><h3>Ziele</h3>
+    ${['C','A'].map(x => `<div class="grid2"><label class="field"><span>${esc(PEOPLE[x].name)} Start (kg)</span><input type="text" inputmode="decimal" id="sk${x}" value="${fmtNum(s.startKg[x])}"></label><label class="field"><span>Ziel (kg)</span><input type="text" inputmode="decimal" id="gk${x}" value="${fmtNum(s.goalKg[x])}"></label></div>`).join('')}
+    <label class="field"><span>Wasserziel (Gläser à 250 ml)</span><input type="number" min="4" max="16" id="setWater" value="${s.waterGoal}"></label>
+    <button class="btn sm" style="margin-top:12px" data-act="saveGoals">Plan & Ziele speichern</button>
+  </div>
+
+  <div class="card" style="margin-top:12px"><h3>Training auf diesem Handy</h3>
+    <label class="switch"><span><b>Freihändig</b><br><span class="small muted">Wiederholungen laufen automatisch mit Zeit weiter – kein Tippen nötig.</span></span><input type="checkbox" data-loc="handsfree" ${LOC.handsfree ? 'checked' : ''}></label>
+    <label class="switch"><span><b>Sprachansage</b><br><span class="small muted">Sagt die nächste Übung an.</span></span><input type="checkbox" data-loc="voice" ${LOC.voice ? 'checked' : ''}></label>
+    <label class="switch"><span><b>Töne & Vibration</b></span><input type="checkbox" data-loc="sound" ${LOC.sound ? 'checked' : ''}></label>
+  </div>
+
+  <div class="card" style="margin-top:12px"><h3>Erinnerungen</h3>
+    <p class="small muted" style="margin:6px 0 10px">Web-Apps können nicht zuverlässig von selbst erinnern. Darum kommen die Erinnerungen in euren Kalender – der meldet sich garantiert.</p>
+    <a class="btn block" href="${gcalLink()}" target="_blank" rel="noopener">Training in Google Kalender eintragen</a>
+    <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn sm soft" data-act="icsTrain">Training als .ics</button><button class="btn sm soft" data-act="icsWater">Trink-Erinnerung als .ics</button></div>
+    <button class="btn sm ghost" style="margin-top:8px" data-act="notifPerm">Benachrichtigungen für Küchentimer erlauben</button>
+  </div>
+
+  <div class="card" style="margin-top:12px"><h3>Daten</h3>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn sm soft" data-act="exportData">Sicherung herunterladen</button><label class="btn sm soft" style="cursor:pointer">Sicherung laden<input type="file" id="importFile" accept="application/json,.json" hidden></label></div>
+  </div>
+  <p class="tiny faint" style="text-align:center;margin-top:14px">Fit zu zweit · Version 1.0</p>`);
+  $('#importFile').addEventListener('change', importData);
+}
+function gcalLink(){
+  const s = settings(); const first = nextTrainDate(); const [hh, mm] = s.time.split(':').map(Number);
+  const d = parseYmd(first); d.setHours(hh, mm, 0, 0); const e = new Date(d.getTime() + 45*60000);
+  const f = x => `${x.getFullYear()}${pad2(x.getMonth()+1)}${pad2(x.getDate())}T${pad2(x.getHours())}${pad2(x.getMinutes())}00`;
+  const days = s.days.map(n => ['SU','MO','TU','WE','TH','FR','SA'][n]).join(',');
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent('Training – Fit zu zweit') +
+    '&dates=' + f(d) + '/' + f(e) + '&ctz=Europe/Berlin&recur=' + encodeURIComponent('RRULE:FREQ=WEEKLY;BYDAY=' + days) +
+    '&details=' + encodeURIComponent('35–45 Minuten Abendtraining. App öffnen und auf „Training starten“ tippen.');
+}
+function nextTrainDate(){ const t = today(); for (let i = 0; i < 8; i++){ const d = addDays(t, i); if (isTrainDay(d)) return d; } return t; }
+function download(name, text, type){
+  const blob = new Blob([text], { type }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function icsTrain(){
+  const s = settings(); const d = nextTrainDate().replace(/-/g, ''); const tm = s.time.replace(':', '') + '00';
+  const days = s.days.map(n => ['SU','MO','TU','WE','TH','FR','SA'][n]).join(',');
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
+  download('training-fit-zu-zweit.ics', ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Fit zu zweit//DE','CALSCALE:GREGORIAN','BEGIN:VEVENT',
+    'UID:training-' + uid() + '@fitzuzweit','DTSTAMP:' + stamp,'DTSTART:' + d + 'T' + tm,'DURATION:PT45M','RRULE:FREQ=WEEKLY;BYDAY=' + days,
+    'SUMMARY:Training – Fit zu zweit','DESCRIPTION:35–45 Minuten Abendtraining. App öffnen und Training starten.',
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Gleich ist Training','TRIGGER:-PT15M','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n'), 'text/calendar');
+}
+function icsWater(){
+  const d = today().replace(/-/g, ''); const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
+  const ev = ['100000','130000','160000'].map(h => ['BEGIN:VEVENT','UID:wasser-' + h + '-' + uid() + '@fitzuzweit','DTSTAMP:' + stamp,'DTSTART:' + d + 'T' + h,'DURATION:PT5M','RRULE:FREQ=DAILY',
+    'SUMMARY:💧 Glas Wasser trinken','BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Glas Wasser trinken','TRIGGER:PT0M','END:VALARM','END:VEVENT'].join('\r\n'));
+  download('trinken-fit-zu-zweit.ics', ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Fit zu zweit//DE'].concat(ev, ['END:VCALENDAR']).join('\r\n'), 'text/calendar');
+}
+function exportData(){ download(`fit-zu-zweit-sicherung-${today()}.json`, JSON.stringify({ app:'fit-zu-zweit', v:1, recs: DB.recs }, null, 1), 'application/json'); }
+function importData(e){
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { try { const j = JSON.parse(r.result); if (!j.recs) throw 0; let n = 0;
+      Object.values(j.recs).forEach(x => { const l = DB.recs[x.k]; if (!l || x.t > l.t){ DB.recs[x.k] = x; DB.dirty.add(x.k); n++; } });
+      persist(); scheduleSync(); render(); toast(`${n} Einträge übernommen`); } catch(err){ toast('Datei konnte nicht gelesen werden'); } };
+  r.readAsText(f);
+}
+function shareLink(){
+  const data = btoa(unescape(encodeURIComponent(JSON.stringify({ u: DB.cfg.url, c: DB.cfg.code }))));
+  const url = location.origin + location.pathname + '#verbinden=' + data;
+  const text = `Hier ist unser Link für „Fit zu zweit“. Einmal öffnen, dann bist du verbunden: ${url}`;
+  if (navigator.share) navigator.share({ title:'Fit zu zweit', text, url }).catch(() => {});
+  else if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast('Link kopiert – jetzt per WhatsApp schicken')).catch(() => prompt('Link kopieren:', url));
+}
+function chooseMe(first){
+  openSheet(`<h2>${first ? 'Willkommen bei Fit zu zweit 👋' : 'Wer nutzt dieses Handy?'}</h2><p class="muted" style="margin:6px 0 0">${first ? 'Wer nutzt dieses Handy? Du kannst das später jederzeit oben rechts ändern.' : 'Die App zeigt dann deinen Plan, dein Training und deine Ziele.'}</p>
+    <div class="whoami">${['C','A'].map(x => `<button data-act="setme" data-p="${x}"><span class="av" style="background:var(--${x})">${PEOPLE[x].name[0]}</span><span>${esc(PEOPLE[x].name)}<span class="small muted" style="display:block;font-weight:500">${fmtNum(PEOPLE[x].kcal,0)} kcal · eigenes Training</span></span></button>`).join('')}</div>`);
+}
+
+/* =========================================================
+   Aktionen
+   ========================================================= */
+const ACT = {
+  nav: el => setView(el.dataset.v),
+  switchme: () => chooseMe(false),
+  setme: el => { const first = !LS.get('fz_me', null); LS.set('fz_me', el.dataset.p); PROG_P = null; closeSheet(); render(); checkBadges(true); if (first){ toast(`Hallo ${PEOPLE[el.dataset.p].name}!`); handleAction(); } else if ($('#layer').innerHTML === '') toast(`Jetzt: ${PEOPLE[el.dataset.p].name}`); },
+  settings: () => openSettings(),
+  sync: () => sync(true),
+  sheetClose: () => closeSheet(),
+  water: el => addWater(+el.dataset.d),
+  startTraining: el => startWorkout(el.dataset.skip === '1'),
+  recipe: el => openRecipe(+el.dataset.wd),
+  kt: el => ktStart(+el.dataset.min, el.dataset.label),
+  ktStop: el => { KT = KT.filter(t => t.id !== el.dataset.id); ktSave(); renderTimers(); ktLoop(); },
+  ktAdd: el => { const t = KT.find(x => x.id === el.dataset.id); if (t){ t.endAt += 60000; ktSave(); renderTimers(); } },
+  shopToggle: (el, e) => { if (e.target.closest('.del')) return; const k = el.dataset.k; const cur = get(k) || {}; put(k, Object.assign({}, cur, { c: !cur.c })); vibrate(15); render(); },
+  shopDel: async el => { const k = el.dataset.k; put(k, get(k) || {}, true); render(); },
+  shopAdd: () => { const n = $('#shopName').value.trim(); if (!n) return $('#shopName').focus(); put('shopx|' + uid(), { name: n, q: $('#shopQ').value.trim(), cat: $('#shopCat').value, c: false }); render(); toast('Hinzugefügt: ' + n); },
+  shopHide: () => { HIDE_DONE = !HIDE_DONE; LS.set('fz_hidedone', HIDE_DONE); render(); },
+  shopReset: async () => { const ok = await ask('Neue Einkaufswoche?', 'Alle Haken werden entfernt – für euch beide. Eigene Artikel bleiben auf der Liste.', [{ label:'Ja, Haken entfernen', value:true }, { label:'Abbrechen', value:false, cls:'ghost' }]); if (!ok) return;
+    SHOP.forEach(([, items]) => items.forEach(([id]) => { if (shopState(id)) put('shop|' + id, { c:false }); }));
+    list('shopx|').forEach(r => { if (r.d.c) put(r.k, Object.assign({}, r.d, { c:false })); }); render(); toast('Liste ist bereit für die neue Woche'); },
+  progP: el => { PROG_P = el.dataset.p; render(); },
+  chartM: el => { CHART_M = el.dataset.m; render(); },
+  calNav: el => { const [y, m] = (CAL_M || today().slice(0,7)).split('-').map(Number); const d = new Date(y, m - 1 + (+el.dataset.d), 1); CAL_M = `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; render(); },
+  weightOpen: el => openWeight(el.dataset.p),
+  weightSave: el => { const p = el.dataset.p; const date = $('#wDate').value || today(); const kg = parseFloat(String($('#wKg').value).replace(',', '.')); const waist = parseFloat(String($('#wWaist').value).replace(',', '.'));
+    if (!(kg > 30) && !(waist > 30)) return toast('Bitte Gewicht oder Bauchumfang eintragen');
+    const prev = get(`body|${p}|${date}`) || {};
+    put(`body|${p}|${date}`, { p, date, kg: kg > 30 ? Math.round(kg*10)/10 : (prev.kg || null), waist: waist > 30 ? Math.round(waist*10)/10 : (prev.waist || null) });
+    closeSheet(); render(); toast('Gespeichert ✓'); setTimeout(checkBadges, 300); },
+  bodyDel: async el => { const ok = await ask('Eintrag löschen?', '', [{ label:'Löschen', value:true, cls:'danger' }, { label:'Abbrechen', value:false, cls:'ghost' }]); if (ok){ put(el.dataset.k, get(el.dataset.k) || {}, true); render(); } },
+  pPause: () => plPause(),
+  pNext: () => goStep(PL.i + 1),
+  pPrev: () => goStep(PL.i - 1),
+  pSkipBlock: () => plSkipBlock(),
+  pClose: () => plClose(),
+  pEnd: () => stopPlayer(),
+  pEndWater: () => { stopPlayer(); addWater(1); },
+  saveSync: async () => { DB.cfg.url = $('#cfgUrl').value.trim(); DB.cfg.code = $('#cfgCode').value.trim(); DB.since = 0; Object.keys(DB.recs).forEach(k => DB.dirty.add(k)); persist(); await sync(true); const sb = document.querySelector('[data-act=shareLink]'); if (sb) sb.disabled = !DB.cfg.url; },
+  shareLink: () => shareLink(),
+  toggleDay: el => { const d = +el.dataset.d; let days = settings().days.slice(); days = days.includes(d) ? days.filter(x => x !== d) : days.concat(d); if (!days.length) return toast('Mindestens ein Trainingstag'); saveSettings({ days: days.sort() }); el.classList.toggle('on'); render(); },
+  saveGoals: () => { const n = id => parseFloat(String($('#' + id).value).replace(',', '.'));
+    saveSettings({ time: $('#setTime').value || DEFAULTS.time, start: $('#setStart').value || DEFAULTS.start, setsOverride: +$('#setSets').value,
+      startKg: { C: n('skC'), A: n('skA') }, goalKg: { C: n('gkC'), A: n('gkA') }, waterGoal: Math.round(n('setWater')) || 8 });
+    render(); toast('Gespeichert – gilt für euch beide'); },
+  icsTrain: () => icsTrain(),
+  icsWater: () => icsWater(),
+  notifPerm: async () => { if (!('Notification' in window)) return toast('Dieses Gerät unterstützt keine Benachrichtigungen'); const r = await Notification.requestPermission(); toast(r === 'granted' ? 'Benachrichtigungen erlaubt ✓' : 'Nicht erlaubt – geht in den Handy-Einstellungen'); },
+  exportData: () => exportData()
+};
+function addWater(d){
+  const p = me(), t = today(); const n = Math.max(0, water(p, t) + d);
+  put(`water|${p}|${t}`, { p, date: t, n });
+  if (d > 0){ vibrate(20); if (n === settings().waterGoal){ toast('💧 Wasserziel geschafft!'); confetti(); } else toast(`💧 ${n} ${n === 1 ? 'Glas' : 'Gläser'} heute`); }
+  render(); setTimeout(checkBadges, 300);
+}
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const fn = ACT[el.dataset.act]; if (fn){ e.preventDefault(); fn(el, e); }
+});
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.item[data-act]')){ e.preventDefault(); ACT.shopToggle(e.target, e); }
+  if (e.key === 'Enter' && e.target.id === 'shopName') ACT.shopAdd();
+});
+document.addEventListener('change', e => {
+  const k = e.target.dataset && e.target.dataset.loc;
+  if (k){ LOC[k] = e.target.checked; saveLoc(); render(); }
+  if (['setTime','setStart','setSets'].includes(e.target.id)) ACT.saveGoals();
+});
+
+/* =========================================================
+   Start, Schnellstarts, Verbindungs-Link
+   ========================================================= */
+function handleAction(){
+  const a = new URLSearchParams(location.search).get('a');
+  if (!a || !LS.get('fz_me', null)) return;
+  history.replaceState(null, '', location.pathname + location.hash);
+  if (a === 'training'){ setView('training'); }
+  else if (a === 'wasser'){ setView('heute'); addWater(1); }
+  else if (a === 'gewicht'){ setView('fortschritt'); openWeight(); }
+  else if (a === 'einkauf'){ setView('einkauf'); }
+  else if (a === 'essen'){ setView('essen'); }
+}
+function handleConnectHash(){
+  const m = location.hash.match(/verbinden=([^&]+)/);
+  if (!m) return;
+  try { const j = JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(m[1]))))); if (j.u && j.c){ DB.cfg = { url: j.u, code: j.c }; DB.since = 0; Object.keys(DB.recs).forEach(k => DB.dirty.add(k)); persist(); toast('Verbunden mit eurer Google-Tabelle ✓'); } } catch(e){ toast('Link ungültig'); }
+  history.replaceState(null, '', location.pathname + location.search);
+}
+function init(){
+  handleConnectHash();
+  VIEW = LS.get('fz_view', 'heute');
+  render(); renderTimers(); if (KT.length) ktLoop();
+  setSync(DB.cfg.url ? 'ok' : 'off');
+  if (!LS.get('fz_me', null)) chooseMe(true); else { checkBadges(); handleAction(); }
+  sync();
+  setInterval(() => { if (document.visibilityState === 'visible') sync(); }, 60000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible'){ sync(); if (wakeWanted) wakeLock(true); if (!$('#player').classList.contains('hidden')) plTick(); render(); }
+  });
+  window.addEventListener('online', () => sync());
+  let lastDay = today(); setInterval(() => { if (today() !== lastDay){ lastDay = today(); render(); } }, 60000);
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+init();
+</script>
+</body>
+</html>
